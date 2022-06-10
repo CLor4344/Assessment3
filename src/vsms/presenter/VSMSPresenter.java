@@ -5,6 +5,7 @@
 package vsms.presenter;
 
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import vsms.model.Customer;
 import vsms.model.IVSMSModel;
@@ -44,7 +45,12 @@ public class VSMSPresenter {
             view.displayMessage("Customer was not added.");
         }
     }
-
+    public void testingCount(){
+        List test = new ArrayList<String>();
+        test = model.countMake();
+        view.testing(test);
+        
+    }
     public void getServices() {
         try {
             ResultSet rs = null;

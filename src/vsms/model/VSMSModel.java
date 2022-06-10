@@ -27,6 +27,7 @@ public class VSMSModel implements IVSMSModel {
     private PreparedStatement selectAllJoin = null;
     private PreparedStatement selectAllVehicles = null;
     private PreparedStatement selectAllServices = null;
+    private PreparedStatement countMakeQuery = null;
 
     private Connection connection = null;
 
@@ -42,11 +43,38 @@ public class VSMSModel implements IVSMSModel {
                     + "FROM services As S \n"
                     + "Inner Join vehicles As V on V.registration=S.vehiclerego \n"
                     + "Inner Join customers As C on V.customerid=C.customerID");
+            countMakeQuery = connection.prepareStatement("SELECT v.make,  Count(v.make)\n" +
+                "FROM services As S \n" +
+                "Inner Join vehicles As V on V.registration=S.vehiclerego\n" +
+                "group by v.make\n" +
+                "order by count(v.make) DESC\n" +
+                "LIMIT 3;");
 
         } catch (SQLException sqlException) {
             vsms.view.VSMSView.failedConnect(sqlException.toString());
             System.exit(1);
         }
+    }
+
+    public List<String> countMake() {
+        ResultSet rs = null;
+        String name = "";
+        String num = "";
+        List test = new ArrayList<String>();
+        
+        try {
+            rs = countMakeQuery.executeQuery();
+            while (rs.next()){
+                name=rs.getString("make");
+                num = String.valueOf(rs.getByte(2));
+                test.add(name+ ":" + num);
+            }
+            
+
+        } catch (SQLException sqlException) {
+
+        }
+        return test;
     }
 
     public List<Customer> getAllCustomers() {
@@ -69,9 +97,9 @@ public class VSMSModel implements IVSMSModel {
             insertNewCustomer.setString(2, lName);
             insertNewCustomer.setString(3, phone);
             insertNewCustomer.setString(4, address);
-            
+
             outcome = insertNewCustomer.executeUpdate();
-            
+
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
             close();

@@ -20,5 +20,6 @@ public interface IVSMSView {
     void displayCustomers(List<Customer> c);
     void displayServices(List<Service> c);
     void displayVehicles(List<Vehicle> v);
+    void testing(List<String> ls);
     
 }

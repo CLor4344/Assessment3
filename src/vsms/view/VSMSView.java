@@ -367,7 +367,6 @@ public class VSMSView extends JFrame implements IVSMSView {
         servPanel.add(minorServPanel6);
         servPanel.add(Box.createVerticalStrut(25));
 
-
         //display table and panel
         displayPanel = new JPanel();
         tableButtonPanel = new JPanel();
@@ -520,13 +519,14 @@ public class VSMSView extends JFrame implements IVSMSView {
     private void exitButtonActionPerformed(ActionEvent evt) {
         presenter.exitWindow();
     }
-    
+
     //temp button to test opening graph on new panel
     private void testButtonActionPerformed(ActionEvent evt) {
-        testing();
+        presenter.testingCount();
         CardLayout cL1 = (CardLayout) mainPanelCard.getLayout();
         cL1.show(mainPanelCard, "b");
     }
+
     //temp button to show get all data with sql joins
     private void viewAllButtonActionPerformed(ActionEvent evt) {
         presenter.getServices();
@@ -552,6 +552,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void displayMessage(String m) {
         JOptionPane.showMessageDialog(this, m);
     }
+
     //displaying customers on the table
     public void displayCustomers(List<Customer> c) {
 
@@ -561,7 +562,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         //sorter.setRowFilter(RowFilter.regexFilter("(?i)"));
         //displayTable.setRowSorter(sorter);
         int size = c.size();
-        
+
         //adding data from presenter to the table   
         for (int i = 0; i < size; i++) {
             Object[] data = new Object[4];
@@ -575,6 +576,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         }
 
     }
+
     //displaying services on the table
     public void displayServices(List<Service> c) {
 
@@ -600,6 +602,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         }
 
     }
+
     //displaying vehicles on the table
     public void displayVehicles(List<Vehicle> v) {
 
@@ -625,22 +628,46 @@ public class VSMSView extends JFrame implements IVSMSView {
         }
     }
 
-    public void testing() {
+    public void testing(List<String> ls) {
+        String makeOne = "";
+        int countOne = 0;
+        String makeTwo = "";
+        int countTwo = 0;
+        String makeThree = "";
+        int countThree = 0;
+        if (ls.size() == 3) {
+
+            String[] split = ls.get(0).toString().split(":", -1);
+            makeOne = split[0];
+            countOne = Integer.parseInt(split[1]);
+
+            split = ls.get(1).toString().split(":", -1);
+            makeTwo = split[0];
+            countTwo = Integer.parseInt(split[1]);
+
+            split = ls.get(2).toString().split(":", -1);
+            makeThree = split[0];
+            countThree = Integer.parseInt(split[1]);
+
+            displayMessage(makeOne+"test"+countOne);
+            displayMessage(makeTwo+"test"+countTwo );
+            displayMessage( "test" + makeThree + countThree);
+        }
+
         CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("testing");
+        xAxis.setLabel("Make");
 
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Testing");
+        yAxis.setLabel("Number Of Services");
 
         BarChart barChart = new BarChart(xAxis, yAxis);
 
         XYChart.Series data = new XYChart.Series();
-        data.setName("here");
+        data.setName("Serviced Makes");
 
-        data.getData().add(new XYChart.Data("product a", 200));
-        data.getData().add(new XYChart.Data("product b", 2500));
-        data.getData().add(new XYChart.Data("product c", 350));
-        data.getData().add(new XYChart.Data("product d", 400));
+        data.getData().add(new XYChart.Data(makeOne, countOne));
+        data.getData().add(new XYChart.Data(makeTwo, countTwo));
+        data.getData().add(new XYChart.Data(makeThree, countThree));
         barChart.getData().add(data);
         //scrollPane1.add(barChart);
         //Scene scene = createScene();
