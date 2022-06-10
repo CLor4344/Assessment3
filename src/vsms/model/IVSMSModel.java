@@ -12,4 +12,6 @@ import java.util.List;
  */
 public interface IVSMSModel {
     public List<Service> allCustomer();
+    public List<Vehicle> getAllVehicles();
+    public int insertCustomer(String fName, String lName, String phone, String address);
 }

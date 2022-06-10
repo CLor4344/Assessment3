@@ -7,6 +7,7 @@ package vsms.view;
 import java.util.List;
 import vsms.model.Customer;
 import vsms.model.Service;
+import vsms.model.Vehicle;
 import vsms.presenter.VSMSPresenter;
 
 /**
@@ -16,7 +17,8 @@ import vsms.presenter.VSMSPresenter;
 public interface IVSMSView {
     void bind(VSMSPresenter p);
     void displayMessage(String m);
-    //void displayCustomers(List<Customer> c);
-    void displayCustomers(List<Service> c);
+    void displayCustomers(List<Customer> c);
+    void displayServices(List<Service> c);
+    void displayVehicles(List<Vehicle> v);
     
 }
