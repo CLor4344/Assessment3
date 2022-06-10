@@ -637,10 +637,10 @@ public class VSMSView extends JFrame implements IVSMSView {
         XYChart.Series data = new XYChart.Series();
         data.setName("here");
 
-        data.getData().add(new XYChart.Data("product a", 3000));
-        data.getData().add(new XYChart.Data("product a", 3000));
-        data.getData().add(new XYChart.Data("product a", 3000));
-        data.getData().add(new XYChart.Data("product a", 3000));
+        data.getData().add(new XYChart.Data("product a", 200));
+        data.getData().add(new XYChart.Data("product b", 2500));
+        data.getData().add(new XYChart.Data("product c", 350));
+        data.getData().add(new XYChart.Data("product d", 400));
         barChart.getData().add(data);
         //scrollPane1.add(barChart);
         //Scene scene = createScene();
