@@ -32,11 +32,20 @@ public interface IVSMSView {
 
     void displayVehicles(Vehicle v);
     void vehicleMaxAndCurrent(int m, int c);
+    void serviceMaxAndCurrent(int m, int c);
 
     void testing(List<String> ls);
 
     void setVehicleBrowsing(boolean tf);
 
     void setServiceBrowsing(boolean tf);
+    
+    //field clearing and enable/disable
+    void disableServiceField();
+    void enableServiceField();
+    void clearServiceField();
+    void clearVehicleField();
+    void enableVehicleField();
+    void disableVehicleField();
 
 }

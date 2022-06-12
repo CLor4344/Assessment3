@@ -121,120 +121,96 @@ public class VSMSPresenter {
     }
 
     public void getCustomerVehicles(int id, String rego) {
-        serviceResults = model.serviceByCIdRego(id, rego);
-        numberOfServEntries = serviceResults.size();
+
         vehicleResults = model.getCustomerVehicles(id);
         numberOfEntries = vehicleResults.size();
         currentCustomer = model.getCustomer(id);
 
         if (numberOfEntries == 0) {
-            view.displayMessage("The customer has no entries.");
-        }
-        if (numberOfEntries == 1) {
-            currentIndexNumber = 0;
-            currentServIndexNumber = 0;
-            currentVeh = vehicleResults.get(currentIndexNumber);
-            populateVehicleFields();
+            view.displayMessage("The customer has no vehicles.");
             populateCustomerFields();
-            view.displayMessage("the current service entries are:" + String.valueOf(numberOfServEntries));
-            if (numberOfServEntries != 0) {
-                currentServ = serviceResults.get(currentServIndexNumber);
-                populateServiceFields();
-
-            }
+            //clear vehicle and services
+            
+        } else if (numberOfEntries == 1) {
+            currentIndexNumber = 0;
+            currentVeh = vehicleResults.get(currentIndexNumber);
+            populateCustomerFields();
+            populateVehicleFields();
             view.setVehicleBrowsing(false);
-        }
-        if (numberOfEntries > 1) {
-            currentIndexNumber = 0;
-            currentServIndexNumber = 0;
-
-            currentVeh = vehicleResults.get(currentIndexNumber);
-
-            populateVehicleFields();
-            populateCustomerFields();
-            view.displayMessage("the current service entries are:" + String.valueOf(numberOfServEntries));
-            if (numberOfServEntries != 0) {
-                currentServ = serviceResults.get(currentServIndexNumber);
-                populateServiceFields();
-
-            }
-
-            view.setVehicleBrowsing(true);
-        }
-        /*
-        if (option == 1) {
-            vehicleResults = model.getCustomerVehicles(id);
-            numberOfEntries = vehicleResults.size();
-            currentCustomer = model.getCustomer(id);
-
-            if (numberOfEntries == 0) {
-                view.displayMessage("The customer has no vehicles registered.");
-            }
-            if (numberOfEntries == 1) {
-                currentIndexNumber = 0;
-                numberOfServEntries = 0;
-                currentVeh = vehicleResults.get(currentIndexNumber);
-                populateVehicleFields();
-                populateCustomerFields();
-
-                view.setVehicleBrowsing(false);
-            }
-            if (numberOfEntries > 1) {
-                currentIndexNumber = 0;
-                currentServIndexNumber = 0;
-
-                currentVeh = vehicleResults.get(currentIndexNumber);
-
-                populateVehicleFields();
-                populateCustomerFields();
-
-                view.setVehicleBrowsing(true);
-            }
-        }
-        if (option == 2) {
+            rego = currentVeh.getRegistration();
 
             serviceResults = model.serviceByCIdRego(id, rego);
-
             numberOfServEntries = serviceResults.size();
-            vehicleResults = model.getCustomerVehicles(id);
-            numberOfEntries = vehicleResults.size();
-            currentCustomer = model.getCustomer(id);
+            currentServIndexNumber = 0;
 
-            if (numberOfEntries == 0 || numberOfServEntries == 0) {
-                view.displayMessage("The customer has no entries.");
-            }
-            if (numberOfEntries == 1) {
-                currentIndexNumber = 0;
-                numberOfServEntries = 0;
-                currentVeh = vehicleResults.get(currentIndexNumber);
-                populateVehicleFields();
-                populateCustomerFields();
-                populateServiceFields();
-                view.setVehicleBrowsing(false);
-            }
-            if (numberOfEntries > 1) {
-                currentIndexNumber = 0;
-                currentServIndexNumber = 0;
-
-                currentVeh = vehicleResults.get(currentIndexNumber);
+            view.displayMessage("the current service entries are:" + String.valueOf(numberOfServEntries));
+            if (numberOfServEntries == 0) {
+                view.clearServiceField();
+                view.disableServiceField();
+                view.setServiceBrowsing(false);
+            } else if (numberOfServEntries == 1) {
                 currentServ = serviceResults.get(currentServIndexNumber);
-                populateVehicleFields();
-                populateCustomerFields();
                 populateServiceFields();
-                view.setVehicleBrowsing(true);
+                view.setServiceBrowsing(false);
+            } else {
+                currentServ = serviceResults.get(currentServIndexNumber);
+                populateServiceFields();
+                view.setServiceBrowsing(true);
             }
-        }*/
+        } else {
+            currentIndexNumber = 0;
+            currentServIndexNumber = 0;
+
+            currentVeh = vehicleResults.get(currentIndexNumber);
+            populateVehicleFields();
+            populateCustomerFields();
+            view.setVehicleBrowsing(true);
+            rego = currentVeh.getRegistration();
+            getServices(id, rego);
+            /*
+            rego = currentVeh.getRegistration();
+            serviceResults = model.serviceByCIdRego(id, rego);
+            numberOfServEntries = serviceResults.size();
+
+            view.displayMessage("the current service entries asddasasdasdasd are:" + String.valueOf(numberOfServEntries));
+            if (numberOfServEntries == 0) {
+                view.displayMessage("The vehicle has no services.");
+            } else if (numberOfServEntries == 1) {
+                currentServ = serviceResults.get(currentServIndexNumber);
+                populateServiceFields();
+                view.setServiceBrowsing(false);
+            } else {
+                currentServ = serviceResults.get(currentServIndexNumber);
+                populateServiceFields();
+                view.setServiceBrowsing(true);
+            }*/
+
+        }
 
     }
 
-    /* public int matchCustomer(String fName, String lName, String phone, String address) {
-        int test = 0;
-        view.displayMessage(String.valueOf(test));
-        test = model.testCustomer(fName, lName, phone, address);
-        view.displayMessage(String.valueOf(test));
-        return test;
+    private void getServices(int id, String rego) {
+        //rego = currentVeh.getRegistration();
+        serviceResults = model.serviceByCIdRego(id, rego);
+        numberOfServEntries = serviceResults.size();
 
-    }*/
+        if (numberOfServEntries == 0) {
+            //clear sevice fields and disable fields
+            view.clearServiceField();
+            view.disableServiceField();
+            view.setServiceBrowsing(false);
+
+        } else if (numberOfServEntries == 1) {
+            currentServ = serviceResults.get(currentServIndexNumber);
+            populateServiceFields();
+            view.setServiceBrowsing(false);
+        } else {
+            currentServ = serviceResults.get(currentServIndexNumber);
+            populateServiceFields();
+            view.setServiceBrowsing(true);
+        }
+    }
+
     public void showNext() {
         currentIndexNumber++;
         if (currentIndexNumber >= numberOfEntries) {
@@ -242,6 +218,7 @@ public class VSMSPresenter {
         }
         currentVeh = vehicleResults.get(currentIndexNumber);
         populateVehicleFields();
+        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration());
 
     }
 
@@ -252,6 +229,26 @@ public class VSMSPresenter {
         }
         currentVeh = vehicleResults.get(currentIndexNumber);
         populateVehicleFields();
+        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration());
+    }
+
+    public void servShowNext() {
+        currentServIndexNumber++;
+        if (currentServIndexNumber >= numberOfServEntries) {
+            currentServIndexNumber = 0;
+        }
+        currentServ = serviceResults.get(currentServIndexNumber);
+        populateServiceFields();
+
+    }
+
+    public void servPrevious() {
+        currentServIndexNumber--;
+        if (currentServIndexNumber < 0) {
+            currentServIndexNumber = numberOfServEntries - 1;
+        }
+        currentServ = serviceResults.get(currentServIndexNumber);
+        populateServiceFields();
     }
 
     public void populateCustomerFields() {
@@ -265,6 +262,7 @@ public class VSMSPresenter {
 
     public void populateServiceFields() {
         view.displayServices(currentServ);
+        view.serviceMaxAndCurrent(numberOfServEntries, currentServIndexNumber);
     }
 
     public void populateVehcileTables(List<Vehicle> testing) {

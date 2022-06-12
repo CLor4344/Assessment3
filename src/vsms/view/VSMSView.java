@@ -6,13 +6,20 @@ package vsms.view;
 
 import com.sun.xml.internal.ws.util.StringUtils;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.DateFormatSymbols;
+import java.time.YearMonth;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -34,6 +41,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -86,6 +94,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JPanel minorCustPanel3;
     private JPanel minorCustPanel4;
     private JPanel minorCustPanel5;
+    private JPanel minorCustPanel6;
     private JLabel custIdLabel;
     private JTextField custIdTextField;
     private JLabel firstNameLabel;
@@ -161,7 +170,10 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JLabel servYearLabel;
     private JLabel servMonthLabel;
     private JLabel servDayLabel;
-    private JComboBox monthCombo = new JComboBox();
+
+    String[] months = new DateFormatSymbols().getMonths();
+    String[] actualMonth = Arrays.copyOf(months, months.length - 1);
+    private JComboBox<String> monthCombo = new JComboBox(actualMonth);
     private JComboBox dayCombo = new JComboBox();
     private JLabel servPriceLabel;
     private JTextField servPriceTextField;
@@ -222,6 +234,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorCustPanel3 = new JPanel();
         minorCustPanel4 = new JPanel();
         minorCustPanel5 = new JPanel();
+        minorCustPanel6 = new JPanel();
 
         vehPanel = new JPanel();
         minorVehPanel1 = new JPanel();
@@ -251,16 +264,16 @@ public class VSMSView extends JFrame implements IVSMSView {
 
         //customer panel parts
         custIdLabel = new JLabel("Customer ID:");
-        custIdTextField = new JTextField(2);
+        custIdTextField = new JTextField(3);
         custIdTextField.setEditable(false);
         firstNameLabel = new JLabel("First Name:");
-        firstNameTextField = new JTextField(3);
+        firstNameTextField = new JTextField(6);
         lastNameLabel = new JLabel("Last Name:");
-        lastNameTextField = new JTextField(3);
+        lastNameTextField = new JTextField(6);
         phoneLabel = new JLabel("Phone:");
-        phoneTextField = new JTextField(3);
+        phoneTextField = new JTextField(8);
         addressLabel = new JLabel("Address:");
-        addressTextField = new JTextField(5);
+        addressTextField = new JTextField(10);
 
         addCustButton = new JButton();
         addCustButton.setText("Add");
@@ -286,21 +299,22 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorCustPanel1.add(custIdTextField);
         minorCustPanel2.add(firstNameLabel);
         minorCustPanel2.add(firstNameTextField);
-        minorCustPanel2.add(lastNameLabel);
-        minorCustPanel2.add(lastNameTextField);
-        minorCustPanel3.add(phoneLabel);
-        minorCustPanel3.add(phoneTextField);
-        minorCustPanel4.add(addressLabel);
-        minorCustPanel4.add(addressTextField);
-        minorCustPanel5.add(custButtonCard);
-        minorCustPanel5.add(updateCustButton);
-        minorCustPanel5.add(cancelCustButton);
+        minorCustPanel3.add(lastNameLabel);
+        minorCustPanel3.add(lastNameTextField);
+        minorCustPanel4.add(phoneLabel);
+        minorCustPanel4.add(phoneTextField);
+        minorCustPanel5.add(addressLabel);
+        minorCustPanel5.add(addressTextField);
+        minorCustPanel6.add(custButtonCard);
+        minorCustPanel6.add(updateCustButton);
+        minorCustPanel6.add(cancelCustButton);
 
         custPanel.add(minorCustPanel1);
         custPanel.add(minorCustPanel2);
         custPanel.add(minorCustPanel3);
         custPanel.add(minorCustPanel4);
         custPanel.add(minorCustPanel5);
+        custPanel.add(minorCustPanel6);
 
         //vehicle panel parts
         regoLabel = new JLabel("Registration:");
@@ -382,7 +396,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         servDatePanel.setLayout(
                 new GridLayout(2, 1));
         servYearTextField = new JTextField(3);
-        servPriceTextField = new JTextField(3);
+        servPriceTextField = new JTextField(6);
         //minorServPanel2.setBackground(Color.red);
 
         addServButton = new JButton();
@@ -399,6 +413,10 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorServPanel2.add(servDayLabel);
         minorServPanel3.add(servDateLabel);
         minorServPanel3.add(servYearTextField);
+
+        dayCombo.addItem("Day");
+        dayCombo.setEnabled(false);
+        dayCombo.setToolTipText("Choose a month and year first.");
         minorServPanel3.add(monthCombo);
         minorServPanel3.add(dayCombo);
         monthCombo.setSelectedIndex(-1);
@@ -474,7 +492,7 @@ public class VSMSView extends JFrame implements IVSMSView {
             }
         };
         displayVehTable = new JTable();
-        DefaultTableModel myVehModel = new DefaultTableModel(new Object[][]{}, new String[]{"CustomerID", "Registration", "Make", "Model", "Year", "Odometer", "ServiceID"}) {
+        DefaultTableModel myVehModel = new DefaultTableModel(new Object[][]{}, new String[]{"CustomerID", "Owner", "Registration", "Make", "Model", "Year", "Odometer",}) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 //all cells false
@@ -522,9 +540,6 @@ public class VSMSView extends JFrame implements IVSMSView {
         displayServTable.getColumnModel().getColumn(0).setMinWidth(0);
         displayServTable.getColumnModel().getColumn(0).setMaxWidth(0);
         displayServTable.getColumnModel().getColumn(0).setWidth(0);
-        displayVehTable.getColumnModel().getColumn(6).setMinWidth(0);
-        displayVehTable.getColumnModel().getColumn(6).setMaxWidth(0);
-        displayVehTable.getColumnModel().getColumn(6).setWidth(0);
 
         scrollPane1 = new JScrollPane(displayCustTable);
         scrollPane2 = new JScrollPane(displayVehTable);
@@ -598,10 +613,31 @@ public class VSMSView extends JFrame implements IVSMSView {
         mainFramePanel.add(Box.createHorizontalStrut(40));
         mainPanelCard.add(mainFramePanel, "a");
         mainPanelCard.add(mainPanelGraphs, "b");
+        UIManager.put("ComboBox.disabledForeground", Color.BLACK);
+
+        servYearTextField.addFocusListener(new FocusListener() {
+            public void focusLost(FocusEvent e) {
+                if (servYearTextField.getText().trim().length() > 0) {
+                    if (checkYear(servYearTextField.getText().trim(), 0)) {
+                        setDayNum(monthCombo.getSelectedIndex(), Integer.parseInt(servYearTextField.getText().trim()));
+
+                    }
+                }
+                //else if(monthCombo.getSelectedIndex()!=-1)
+
+            }
+
+            public void focusGained(FocusEvent e) {
+
+            }
+        });
 
         //opening state of fields
         disableVehicleField();
+        disableServiceField();
         updateCustButton.setEnabled(false);
+        updateVehButton.setEnabled(false);
+        updateServButton.setEnabled(false);
 
         add(mainPanelCard);
 
@@ -712,7 +748,7 @@ public class VSMSView extends JFrame implements IVSMSView {
                 new ActionListener() {
 
             public void actionPerformed(ActionEvent evt) {
-                addCustomerButtonActionPerformed(evt);
+                nextServiceButtonActionPerformed(evt);
             } // end method actionPerformed
         } // end anonymous inner class
         ); // end call to addActionListener
@@ -721,7 +757,18 @@ public class VSMSView extends JFrame implements IVSMSView {
                 new ActionListener() {
 
             public void actionPerformed(ActionEvent evt) {
-                saveCustomerButtonActionPerformed(evt);
+                prevServiceButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        monthCombo.addActionListener(
+                new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                if (servYearTextField.getText().trim().length() > 0) {
+                    setDayNum(monthCombo.getSelectedIndex(), Integer.parseInt(servYearTextField.getText().trim()));
+                } else {
+                    servYearTextField.requestFocus();
+                }
             } // end method actionPerformed
         } // end anonymous inner class
         ); // end call to addActionListener
@@ -756,23 +803,23 @@ public class VSMSView extends JFrame implements IVSMSView {
     private void tableEventListened(ListSelectionEvent evt, JTable table) {
         int column = 0;
         int row = table.getSelectedRow();
-        int pid = 0;
+        int cid = 0;
         int column2 = 4;
-
-        
 
         if (table.equals(displayCustTable)) {
             if (table.getValueAt(row, column) instanceof Integer) {
-                pid = (Integer) table.getValueAt(row, column);
+                cid = (Integer) table.getValueAt(row, column);
                 //presenter.(pid);
                 //tableClick();
+                presenter.getCustomerVehicles(cid, "");
+
             }
 
         }
         if (table.equals(displayVehTable)) {
             if (table.getValueAt(row, column2) instanceof String) {
                 int tempId = (Integer) table.getValueAt(row, 0);
-                String tempString = (String) table.getValueAt(row, 1);
+                String tempString = (String) table.getValueAt(row, 2);
                 //String[] stringarray = tempId.split(":");
                 //pid = Integer.parseInt(stringarray[0]);
                 //lastNameTextField.setText(tempId);
@@ -792,7 +839,6 @@ public class VSMSView extends JFrame implements IVSMSView {
 
                 firstNameTextField.setText(tempString);
                 presenter.getCustomerVehicles(tempCId, tempString);
-                
 
             }
 
@@ -811,6 +857,14 @@ public class VSMSView extends JFrame implements IVSMSView {
 
     private void vehPrevButtonActionPerformed(ActionEvent evt) {
         presenter.showPrevious();
+    }
+
+    private void nextServiceButtonActionPerformed(ActionEvent evt) {
+        presenter.servShowNext();
+    }
+
+    private void prevServiceButtonActionPerformed(ActionEvent evt) {
+        presenter.servPrevious();
     }
 
     private void testingMatchButtonActionPerformed(ActionEvent evt) {
@@ -915,13 +969,14 @@ public class VSMSView extends JFrame implements IVSMSView {
         //HUH
 
         for (int i = 0; i < size; i++) {
-            Object[] data = new Object[6];
+            Object[] data = new Object[7];
             data[0] = v.get(i).getCustomer().getId();
-            data[1] = v.get(i).getRegistration();
-            data[2] = v.get(i).getMake();
-            data[3] = v.get(i).getModel();
-            data[4] = v.get(i).getYear() + "test";
-            data[5] = v.get(i).getOdometer();
+            data[1] = v.get(i).getCustomer().getFirstName() + " " + v.get(i).getCustomer().getLastName();
+            data[2] = v.get(i).getRegistration();
+            data[3] = v.get(i).getMake();
+            data[4] = v.get(i).getModel();
+            data[5] = v.get(i).getYear();
+            data[6] = v.get(i).getOdometer();
             currentModel.setRowCount(i);
             currentModel.addRow(data);
         }
@@ -952,6 +1007,15 @@ public class VSMSView extends JFrame implements IVSMSView {
 
     }
 
+    public void displayCustomers(Customer c) {
+        custIdTextField.setText(String.valueOf(c.getId()));
+        firstNameTextField.setText(c.getFirstName());
+        lastNameTextField.setText(c.getLastName());
+        phoneTextField.setText(c.getPhone());
+        addressTextField.setText(c.getAddress());
+
+    }
+
     public void displayVehicles(Vehicle v) {
         regoTextField.setText(v.getRegistration());
         makeTextField.setText(v.getMake());
@@ -964,24 +1028,20 @@ public class VSMSView extends JFrame implements IVSMSView {
         String temp = String.format("%.2f", s.getPrice());
         servIdTextField.setText(String.valueOf(s.getId()));
         servIdTextField.setText(String.valueOf(s.getId()));
-        servPriceTextField.setText("$"+ temp);
+        servPriceTextField.setText("$" + temp);
         servDescTextField.setText(s.getDescription());
         servIdTextField.setText(String.valueOf(s.getId()));
-
-    }
-
-    public void displayCustomers(Customer c) {
-        custIdTextField.setText(String.valueOf(c.getId()));
-        firstNameTextField.setText(c.getFirstName());
-        lastNameTextField.setText(c.getLastName());
-        phoneTextField.setText(c.getPhone());
-        addressTextField.setText(c.getAddress());
 
     }
 
     public void vehicleMaxAndCurrent(int m, int c) {
         vehDenTextField.setText("" + m);
         vehNumTextField.setText("" + (c + 1));
+    }
+
+    public void serviceMaxAndCurrent(int m, int c) {
+        servDenTextField.setText("" + m);
+        servNumTextField.setText("" + (c + 1));
     }
 
     public void testing(List<String> ls) {
@@ -1056,11 +1116,29 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void enableVehicleField() {
-
+        regoTextField.setEditable(true);
+        makeTextField.setEditable(true);
+        modelTextField.setEditable(true);
+        carYearTextField.setEditable(true);
+        vehOdometerTextField.setEditable(true);
     }
 
     public void enableServiceField() {
+        servIdTextField.setEditable(true);
+        servYearTextField.setEditable(true);
+        dayCombo.setEnabled(true);
+        monthCombo.setEnabled(true);
+        servPriceTextField.setEditable(true);
+        servDescTextField.setEditable(true);
+    }
 
+    public void disableServiceField() {
+        servIdTextField.setEditable(false);
+        servYearTextField.setEditable(false);
+        dayCombo.setEnabled(false);
+        monthCombo.setEnabled(false);
+        servPriceTextField.setEditable(false);
+        servDescTextField.setEditable(false);
     }
 
     public void clearCustomerField() {
@@ -1072,11 +1150,22 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void clearVehicleField() {
-
+        regoTextField.setText("");
+        makeTextField.setText("");
+        modelTextField.setText("");
+        carYearTextField.setText("");
+        vehOdometerTextField.setText("");
     }
 
     public void clearServiceField() {
-
+        servIdTextField.setText("");
+        servYearTextField.setText("");
+        dayCombo.setSelectedIndex(-1);
+        monthCombo.setSelectedIndex(-1);
+        servPriceTextField.setText("");
+        servDescTextField.setText("");
+        servNumTextField.setText("");
+        servDenTextField.setText("");
     }
 
     public void entryCustomerFields() {
@@ -1117,6 +1206,57 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void setServiceBrowsing(boolean tf) {
         servNextButton.setEnabled(tf);
         servPrevButton.setEnabled(tf);
+    }
+
+    public boolean checkYear(String tempYear, int i) {
+        Calendar tempCal = Calendar.getInstance();
+        int cyear = tempCal.get(Calendar.YEAR);
+
+        if (tempYear.length() == 0) {
+            JOptionPane.showMessageDialog(null, "Please Enter a year");
+            servYearTextField.requestFocus();
+            return false;
+        } else if (tempYear.matches("\\D+")) {
+            JOptionPane.showMessageDialog(null, "Please Enter only digits");
+            servYearTextField.requestFocus();
+            return false;
+        } else if (tempYear.length() > 4) {
+            JOptionPane.showMessageDialog(null, "Year must be four digits");
+            servYearTextField.requestFocus();
+            return false;
+        } else if (i == 0) {
+            if (Integer.parseInt(servYearTextField.getText().trim()) < 1900 || Integer.parseInt(servYearTextField.getText().trim()) < cyear - 1) {
+                JOptionPane.showMessageDialog(null, "Can't enter a service for a year that has passed. Current year: " + cyear);
+                servYearTextField.requestFocus();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void setDayNum(int m, int y) {
+        //int m = monthCombo.getSelectedIndex() + 1;
+        //int y;
+        m = m + 1;
+        int days;
+        int testing;
+        if (servYearTextField.getText().trim().length() == 0) {
+            servYearTextField.requestFocus();
+        } else if (checkYear(String.valueOf(y), 0) == true && monthCombo.getSelectedIndex() != -1) {
+            y = Integer.parseInt(servYearTextField.getText().trim());
+            YearMonth yearMonth = YearMonth.of(y, m);
+            days = yearMonth.lengthOfMonth();
+
+            testing = dayCombo.getSelectedIndex();
+            dayCombo.removeAllItems();
+            for (int i = 1; i < days + 1; i++) {
+                dayCombo.addItem(i);
+            }
+            dayCombo.setEnabled(true);
+            dayCombo.setSelectedIndex(-1);
+            dayCombo.setSelectedItem(testing + 1);
+        }
+
     }
 
     public static void failedConnect(String m) {
