@@ -47,5 +47,8 @@ public interface IVSMSView {
     void clearVehicleField();
     void enableVehicleField();
     void disableVehicleField();
+    void setCustomerUpdate(boolean tf);
+    void setVehicleUpdate(boolean tf);
+    void setServiceUpdate(boolean tf);
 
 }

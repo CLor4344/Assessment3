@@ -6,6 +6,7 @@ package vsms.presenter;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import vsms.model.Customer;
 import vsms.model.IVSMSModel;
@@ -48,25 +49,58 @@ public class VSMSPresenter {
 
     public void addCustomer(String fName, String lName, String phone, String address) {
         String test = model.testCustomer(fName, lName, phone, address);
-        String[] split = test.split(":", -1);
-        int testNum = Integer.parseInt(split[0].toString());
-        int cId = Integer.parseInt(split[1].toString());
-        view.displayMessage(String.valueOf(cId) + String.valueOf(testNum));
-
-        if (testNum == 0) {
+        int testNum = 0;
+        int cId = 0;
+        if (test.matches("0")) {
             int o = model.insertCustomer(fName, lName, phone, address);
 
             if (o == 1) {
                 view.displayMessage("Customer " + fName + " was added.");
+
+                test = model.testCustomer(fName, lName, phone, address);
+                String[] split = test.split(":", -1);
+                testNum = Integer.parseInt(split[0].toString());
+                cId = Integer.parseInt(split[1].toString());
+
+                currentCustomer = model.getCustomer(cId);
+                populateCustomerFields();
             } else {
                 view.displayMessage("Customer was not added.");
+
             }
         } else {
+            String[] split = test.split(":", -1);
+            testNum = Integer.parseInt(split[0].toString());
+            cId = Integer.parseInt(split[1].toString());
             view.displayMessage("Customer " + fName + " already exists.");
             currentCustomer = model.getCustomer(cId);
             populateCustomerFields();
         }
 
+    }
+
+    public void addVehicle(String rego, String make, String mod, int year, int odometer, int cid) {
+        int testing = model.insertVehicle(rego, make, mod, year, odometer, cid);
+        if (testing == 0) {
+            view.displayMessage("Vehcile " + rego + " was not added.");
+        } else {
+            view.displayMessage("Vehcile " + rego + " was added.");
+            getCustomerVehicles(cid, rego);
+        }
+
+    }
+
+    public void addService(int year, int month, int day, double price, String desc, String rego, int cid) {
+        Calendar c = Calendar.getInstance();
+        c.set(year, month, day);
+        java.sql.Date date = new java.sql.Date(c.getTimeInMillis());//converting date obect to sql.Date object
+        int testing = model.insertService(date, price, desc, rego);
+        if (testing == 0) {
+            view.displayMessage("Vehcile " + rego + " was not added.");
+        } else {
+            view.displayMessage("Service was added.");
+            getServices(cid, rego);;
+        }
     }
 
     public void testingCount() {
@@ -127,10 +161,15 @@ public class VSMSPresenter {
         currentCustomer = model.getCustomer(id);
 
         if (numberOfEntries == 0) {
-            view.displayMessage("The customer has no vehicles.");
             populateCustomerFields();
             //clear vehicle and services
-            
+            view.clearVehicleField();
+            view.disableVehicleField();
+            view.setVehicleUpdate(false);
+            view.clearServiceField();
+            view.disableServiceField();
+            view.setServiceBrowsing(false);
+            view.setServiceUpdate(false);
         } else if (numberOfEntries == 1) {
             currentIndexNumber = 0;
             currentVeh = vehicleResults.get(currentIndexNumber);
@@ -142,12 +181,11 @@ public class VSMSPresenter {
             serviceResults = model.serviceByCIdRego(id, rego);
             numberOfServEntries = serviceResults.size();
             currentServIndexNumber = 0;
-
-            view.displayMessage("the current service entries are:" + String.valueOf(numberOfServEntries));
             if (numberOfServEntries == 0) {
                 view.clearServiceField();
                 view.disableServiceField();
                 view.setServiceBrowsing(false);
+                view.setServiceUpdate(false);
             } else if (numberOfServEntries == 1) {
                 currentServ = serviceResults.get(currentServIndexNumber);
                 populateServiceFields();
@@ -167,24 +205,6 @@ public class VSMSPresenter {
             view.setVehicleBrowsing(true);
             rego = currentVeh.getRegistration();
             getServices(id, rego);
-            /*
-            rego = currentVeh.getRegistration();
-            serviceResults = model.serviceByCIdRego(id, rego);
-            numberOfServEntries = serviceResults.size();
-
-            view.displayMessage("the current service entries asddasasdasdasd are:" + String.valueOf(numberOfServEntries));
-            if (numberOfServEntries == 0) {
-                view.displayMessage("The vehicle has no services.");
-            } else if (numberOfServEntries == 1) {
-                currentServ = serviceResults.get(currentServIndexNumber);
-                populateServiceFields();
-                view.setServiceBrowsing(false);
-            } else {
-                currentServ = serviceResults.get(currentServIndexNumber);
-                populateServiceFields();
-                view.setServiceBrowsing(true);
-            }*/
-
         }
 
     }
@@ -199,13 +219,20 @@ public class VSMSPresenter {
             view.clearServiceField();
             view.disableServiceField();
             view.setServiceBrowsing(false);
+            view.setServiceUpdate(false);
 
         } else if (numberOfServEntries == 1) {
             currentServ = serviceResults.get(currentServIndexNumber);
+            view.clearServiceField();
+            view.disableServiceField();
+            view.setServiceUpdate(true);
             populateServiceFields();
             view.setServiceBrowsing(false);
         } else {
             currentServ = serviceResults.get(currentServIndexNumber);
+            view.clearServiceField();
+            view.disableServiceField();
+            view.setServiceUpdate(true);
             populateServiceFields();
             view.setServiceBrowsing(true);
         }
@@ -253,16 +280,24 @@ public class VSMSPresenter {
 
     public void populateCustomerFields() {
         view.displayCustomers(currentCustomer);
+        view.setCustomerUpdate(true);
     }
 
     public void populateVehicleFields() {
         view.displayVehicles(currentVeh);
         view.vehicleMaxAndCurrent(numberOfEntries, currentIndexNumber);
+        view.setVehicleUpdate(true);
+    }
+
+    public void newVehicleFields() {
+        view.displayVehicles(currentVeh);
+
     }
 
     public void populateServiceFields() {
         view.displayServices(currentServ);
         view.serviceMaxAndCurrent(numberOfServEntries, currentServIndexNumber);
+        view.setServiceUpdate(true);
     }
 
     public void populateVehcileTables(List<Vehicle> testing) {

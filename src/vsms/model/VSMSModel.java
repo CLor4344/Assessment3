@@ -5,6 +5,7 @@
 package vsms.model;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -28,11 +29,17 @@ public class VSMSModel implements IVSMSModel {
     private PreparedStatement selectCustomerVehicles = null;
     private PreparedStatement insertNewCustomer = null;
     private PreparedStatement updateCustomer = null;
+
+    private PreparedStatement insertNewVehicle = null;
+    private PreparedStatement insertNewService = null;
+    private PreparedStatement updateVehicle = null;
     private PreparedStatement selectAllJoin = null;
     private PreparedStatement selectAllVehicles = null;
     private PreparedStatement selectAllServices = null;
     private PreparedStatement countMakeQuery = null;
     private PreparedStatement selectAllJoinByCID = null;
+
+    private PreparedStatement selectVehicleById = null;
 
     private Connection connection = null;
 
@@ -41,6 +48,7 @@ public class VSMSModel implements IVSMSModel {
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             selectAllCustomers = connection.prepareStatement("SELECT * FROM customers");
             selectCustomerById = connection.prepareStatement("SELECT * FROM customers WHERE customerid=?");
+            selectVehicleById = connection.prepareStatement("SELECT * FROM vehicles as V INNER JOIN customers as C on v.customerid=c.customerid WHERE v.registration=?");
             selectCustomerByFields = connection.prepareStatement("SELECT * FROM customers WHERE firstname=? and lastname=? and phone=? and address=?");
             selectCustomerVehicles = connection.prepareStatement("SELECT * FROM vehicles as V Inner Join Customers as C on V.customerid=C.customerid WHERE c.customerid=?");
             insertNewCustomer = connection.prepareStatement("INSERT INTO Customers" + "(firstname, lastname, phone, address)" + "VALUES(?, ?, ?, ?)");
@@ -61,6 +69,8 @@ public class VSMSModel implements IVSMSModel {
                     + "group by v.make\n"
                     + "order by count(v.make) DESC\n"
                     + "LIMIT 3;");
+            insertNewVehicle = connection.prepareStatement("INSERT INTO vehicles" + "(registration, make, model, year, odometer, customerid)" + "VALUES(?, ?, ?, ?, ?, ?)");
+            insertNewService = connection.prepareStatement("INSERT INTO services" + "(servicedate, price, description, vehiclerego)" + "VALUES(?, ?, ?, ?)");
 
         } catch (SQLException sqlException) {
             vsms.view.VSMSView.failedConnect(sqlException.toString());
@@ -111,6 +121,40 @@ public class VSMSModel implements IVSMSModel {
 
             outcome = insertNewCustomer.executeUpdate();
 
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return outcome;
+    }
+
+    public int insertVehicle(String rego, String make, String model, int year, int odometer, int id) {
+        int outcome = 0;
+        try {
+            insertNewVehicle.setString(1, rego);
+            insertNewVehicle.setString(2, make);
+            insertNewVehicle.setString(3, model);
+            insertNewVehicle.setInt(4, year);
+            insertNewVehicle.setInt(5, odometer);
+            insertNewVehicle.setInt(6, id);
+
+            outcome = insertNewVehicle.executeUpdate();
+
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return outcome;
+    }
+
+    public int insertService(Date date, double price, String desc, String rego) {
+        int outcome = 0;
+        try {
+            insertNewService.setDate(1, date);
+            insertNewService.setDouble(2, price);
+            insertNewService.setString(3, desc);
+            insertNewService.setString(4, rego);
+            outcome = insertNewService.executeUpdate();
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
             close();
@@ -200,6 +244,31 @@ public class VSMSModel implements IVSMSModel {
             close();
         } // end catch
         return c;
+    }
+
+    public Vehicle getVehicle(String rego) {
+        ResultSet rs = null;
+        Vehicle v = new Vehicle();
+        Customer c = new Customer();
+        try {
+            selectVehicleById.setString(1, rego);
+            rs = selectVehicleById.executeQuery();
+            if (rs.next() == true) {
+                c = returnCustomer(rs);
+                v.setRegistration(rs.getString("registration"));
+                v.setMake(rs.getString("make"));
+                v.setModel(rs.getString("model"));
+                v.setYear(rs.getInt("year"));
+                v.setOdometer(rs.getInt("odometer"));
+                v.setCustomer(c);
+            }
+
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return v;
     }
 
     private List<Service> fillServices(ResultSet rs) {

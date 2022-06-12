@@ -73,10 +73,10 @@ public class VSMSView extends JFrame implements IVSMSView {
     int odometer = 0;
 
     //service entry variables
-    int seviceDay = 0;
+    int serviceDay = 0;
     int serviceMonth = 0;
     int serviceYear = 0;
-    int servicePrice = 0;
+    double servicePrice = 0;
     String serviceDesc = "";
 
     private JPanel mainPanel;
@@ -138,6 +138,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JButton updateVehButton;
     private JButton cancelVehButton;
     private JButton saveVehButton;
+    private JPanel vehButtonCard;
 
     //veh cycle panel
     private JPanel vehBrowsePanel;
@@ -162,6 +163,8 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JButton addServButton;
     private JButton updateServButton;
     private JButton cancelServButton;
+    private JButton saveServButton;
+    private JPanel servButtonCard;
 
     private JLabel servIdLabel;
     private JTextField servIdTextField;
@@ -344,6 +347,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         vehBrowsePanel.add(vehDenTextField);
         vehBrowsePanel.add(vehNextButton);
 
+        vehButtonCard = new JPanel(new CardLayout());
         addVehButton = new JButton();
         addVehButton.setText("Add");
         updateVehButton = new JButton();
@@ -352,6 +356,9 @@ public class VSMSView extends JFrame implements IVSMSView {
         cancelVehButton.setText("Cancel");
         saveVehButton = new JButton();
         saveVehButton.setText("Save");
+        addVehButton.setEnabled(false);
+        vehButtonCard.add(addVehButton, "a");
+        vehButtonCard.add(saveVehButton, "b");
 
         minorVehPanel1.add(regoLabel);
         minorVehPanel1.add(regoTextField);
@@ -363,7 +370,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorVehPanel4.add(carYearTextField);
         minorVehPanel4.add(vehOdometerLabel);
         minorVehPanel4.add(vehOdometerTextField);
-        minorVehPanel5.add(addVehButton);
+        minorVehPanel5.add(vehButtonCard);
         minorVehPanel5.add(updateVehButton);
         minorVehPanel5.add(cancelVehButton);
 
@@ -401,6 +408,7 @@ public class VSMSView extends JFrame implements IVSMSView {
 
         addServButton = new JButton();
         addServButton.setText("Add");
+        addServButton.setEnabled(false);
         updateServButton = new JButton();
         updateServButton.setText("Update");
         cancelServButton = new JButton();
@@ -421,6 +429,12 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorServPanel3.add(dayCombo);
         monthCombo.setSelectedIndex(-1);
 
+        servButtonCard = new JPanel(new CardLayout());
+        saveServButton = new JButton();
+        saveServButton.setText("Save");
+        servButtonCard.add(addServButton, "a");
+        servButtonCard.add(saveServButton, "b");
+
         servDatePanel.setLayout(new BoxLayout(servDatePanel, BoxLayout.PAGE_AXIS));
         servDatePanel.add(minorServPanel2);
         servDatePanel.add(minorServPanel3);
@@ -428,7 +442,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         minorServPanel4.add(servPriceTextField);
         minorServPanel5.add(servDescLabel);
         minorServPanel5.add(descScrollPane);
-        minorServPanel6.add(addServButton);
+        minorServPanel6.add(servButtonCard);
         minorServPanel6.add(updateServButton);
         minorServPanel6.add(cancelServButton);
 
@@ -618,13 +632,14 @@ public class VSMSView extends JFrame implements IVSMSView {
         servYearTextField.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
                 if (servYearTextField.getText().trim().length() > 0) {
-                    if (checkYear(servYearTextField.getText().trim(), 0)) {
-                        setDayNum(monthCombo.getSelectedIndex(), Integer.parseInt(servYearTextField.getText().trim()));
+                    if (servYearTextField.getText().trim().matches("\\d+")) {
+                        if (checkYear(servYearTextField.getText().trim(), 0)) {
+
+                            setDayNum(monthCombo.getSelectedIndex(), Integer.parseInt(servYearTextField.getText().trim()));
+                        }
 
                     }
                 }
-                //else if(monthCombo.getSelectedIndex()!=-1)
-
             }
 
             public void focusGained(FocusEvent e) {
@@ -638,6 +653,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         updateCustButton.setEnabled(false);
         updateVehButton.setEnabled(false);
         updateServButton.setEnabled(false);
+        servIdTextField.setEditable(false);
 
         add(mainPanelCard);
 
@@ -727,6 +743,43 @@ public class VSMSView extends JFrame implements IVSMSView {
             } // end method actionPerformed
         } // end anonymous inner class
         ); // end call to addActionListener
+
+        addVehButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                vehAddButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        //end button
+        saveVehButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                vehSaveButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        //end button
+        addServButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                servAddButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        //end button
+        saveServButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                servSaveButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        //end button
         vehNextButton.addActionListener(
                 new ActionListener() {
 
@@ -764,7 +817,8 @@ public class VSMSView extends JFrame implements IVSMSView {
         monthCombo.addActionListener(
                 new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
-                if (servYearTextField.getText().trim().length() > 0) {
+                if (servYearTextField.getText().trim().length() > 0 && checkYear(servYearTextField.getText().trim(), 1)) {
+
                     setDayNum(monthCombo.getSelectedIndex(), Integer.parseInt(servYearTextField.getText().trim()));
                 } else {
                     servYearTextField.requestFocus();
@@ -867,6 +921,46 @@ public class VSMSView extends JFrame implements IVSMSView {
         presenter.servPrevious();
     }
 
+    private void vehAddButtonActionPerformed(ActionEvent evt) {
+        CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+        cL1.show(vehButtonCard, "b");
+        clearVehicleField();
+        enableVehicleField();
+
+    }
+
+    private void vehSaveButtonActionPerformed(ActionEvent evt) {
+        if (entryVehicleFields()) {
+            if (vehicleEntryValidation()) {
+                clearVehicleField();
+                presenter.addVehicle(rego, make, model, year, odometer, Integer.parseInt(custIdTextField.getText()));
+                CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+                cL1.show(vehButtonCard, "a");
+            }
+        }
+
+    }
+
+    private void servAddButtonActionPerformed(ActionEvent evt) {
+        CardLayout cL1 = (CardLayout) servButtonCard.getLayout();
+        cL1.show(servButtonCard, "b");
+        clearServiceField();
+        enableServiceField();
+
+    }
+
+    private void servSaveButtonActionPerformed(ActionEvent evt) {
+        if (entryServiceFields()) {
+            if (serviceEntryValidation()) {
+                clearServiceField();
+                presenter.addService(year, serviceMonth, serviceDay, servicePrice, serviceDesc, regoTextField.getText(), Integer.parseInt(custIdTextField.getText()));
+                CardLayout cL1 = (CardLayout) servButtonCard.getLayout();
+                cL1.show(servButtonCard, "a");
+            }
+        }
+
+    }
+
     private void testingMatchButtonActionPerformed(ActionEvent evt) {
 
         entryCustomerFields();
@@ -900,7 +994,6 @@ public class VSMSView extends JFrame implements IVSMSView {
         if (customerEntryValidation()) {
             clearCustomerField();
             presenter.addCustomer(fName, lName, phone, address);
-
             disableCustomerField();
             CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
             cL1.show(custButtonCard, "b");
@@ -1013,6 +1106,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         lastNameTextField.setText(c.getLastName());
         phoneTextField.setText(c.getPhone());
         addressTextField.setText(c.getAddress());
+        addVehButton.setEnabled(true);
 
     }
 
@@ -1022,6 +1116,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         modelTextField.setText(v.getModel());
         carYearTextField.setText(String.valueOf(v.getYear()));
         vehOdometerTextField.setText(String.valueOf(v.getOdometer()));
+        addServButton.setEnabled(true);
     }
 
     public void displayServices(Service s) {
@@ -1124,7 +1219,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void enableServiceField() {
-        servIdTextField.setEditable(true);
+
         servYearTextField.setEditable(true);
         dayCombo.setEnabled(true);
         monthCombo.setEnabled(true);
@@ -1141,6 +1236,18 @@ public class VSMSView extends JFrame implements IVSMSView {
         servDescTextField.setEditable(false);
     }
 
+    public void setCustomerUpdate(boolean tf) {
+        updateCustButton.setEnabled(tf);
+    }
+
+    public void setVehicleUpdate(boolean tf) {
+        updateVehButton.setEnabled(tf);
+    }
+
+    public void setServiceUpdate(boolean tf) {
+        updateServButton.setEnabled(tf);
+    }
+
     public void clearCustomerField() {
         custIdTextField.setText("");
         firstNameTextField.setText("");
@@ -1155,6 +1262,9 @@ public class VSMSView extends JFrame implements IVSMSView {
         modelTextField.setText("");
         carYearTextField.setText("");
         vehOdometerTextField.setText("");
+        vehNumTextField.setText("");
+        vehDenTextField.setText("");
+
     }
 
     public void clearServiceField() {
@@ -1188,14 +1298,134 @@ public class VSMSView extends JFrame implements IVSMSView {
             displayMessage("Phone number must contain only digits");
             phoneTextField.requestFocus();
             return test;
-        } else if (address.matches("\\D+")) {
-            displayMessage("Address must contain a number");
+        } else if (!isValidAddress(address)) {
+            displayMessage("Address must contain a street number and street name");
             addressTextField.requestFocus();
             return test;
         } else {
             test = true;
         }
         return test;
+    }
+
+    public Boolean entryVehicleFields() {
+        boolean test = false;
+        rego = regoTextField.getText().trim().toUpperCase();
+        make = StringUtils.capitalize(makeTextField.getText().trim().toLowerCase());
+        model = StringUtils.capitalize(modelTextField.getText().trim().toLowerCase());
+        String tempYear = carYearTextField.getText().trim();
+        String tempOdo = vehOdometerTextField.getText().trim();
+        if (tempYear.matches("")) {
+            displayMessage("Year field can't be empty.");
+            carYearTextField.requestFocus();
+            return test;
+        } else if (!tempYear.matches("\\d+")) {
+            displayMessage("Year must be digits only.");
+            carYearTextField.requestFocus();
+            return test;
+        } else if (tempOdo.matches("")) {
+            displayMessage("Odometer field can't be empty.");
+            vehOdometerTextField.requestFocus();
+            return test;
+        } else if (!tempOdo.matches("\\d+")) {
+            displayMessage("Odometer must be digits only.");
+            vehOdometerTextField.requestFocus();
+            return test;
+        } else {
+            year = Integer.parseInt(tempYear);
+            odometer = Integer.parseInt(tempOdo);
+            test = true;
+            return test;
+        }
+
+    }
+
+    //validating customer entry fields
+    public Boolean vehicleEntryValidation() {
+        boolean test = false;
+        Calendar tempCal = Calendar.getInstance();
+        int cyear = tempCal.get(Calendar.YEAR);
+        if (rego.length() == 0 || make.length() == 0 || model.length() == 0 || year == 0 || odometer == 0) {
+            displayMessage("Please fill all customer fields.");
+            return test;
+        } else if (rego.length() > 7 || rego.length() < 3) {
+            displayMessage("Registration must be between 3 and 7 characters long.");
+            regoTextField.requestFocus();
+            return test;
+        } else if (!make.matches("\\D+")) {
+            displayMessage("Vehicle make must not contain digits.");
+            makeTextField.requestFocus();
+            return test;
+        } else if (String.valueOf(year).length() != 4) {
+            displayMessage("Vehicle year must be 4 digits.");
+            carYearTextField.requestFocus();
+            return test;
+        } else if (year > cyear + 2) {
+            displayMessage("Vehicle year must not be more than 1 year passed current year.");
+            carYearTextField.requestFocus();
+            return test;
+        } else {
+            test = true;
+        }
+        return test;
+    }
+
+    public Boolean entryServiceFields() {
+        boolean test = false;
+        String n = ".*[0-9].*";
+
+        String tempPrice = servPriceTextField.getText().trim();
+        if (servYearTextField.getText().trim().length() == 0) {
+            displayMessage("Please choose a service date.");
+        } else if (!servYearTextField.getText().trim().matches("\\d+")) {
+            displayMessage("Service year can be digits only.");
+            servYearTextField.requestFocus();
+            return test;
+        } else if (tempPrice.matches("")) {
+            displayMessage("Price field can't be empty.");
+            servPriceTextField.requestFocus();
+            return test;
+        } else if (!tempPrice.matches(n) && tempPrice.contains(".")) {
+            displayMessage("Price must be digits only and no spaces.");
+            servPriceTextField.requestFocus();
+            return test;
+        } else if (tempPrice.contains(" ")) {
+            displayMessage("Price field cannot contain spaces.");
+            servPriceTextField.requestFocus();
+            return test;
+        } else {
+            serviceYear = Integer.parseInt(servYearTextField.getText().trim());
+            serviceMonth = monthCombo.getSelectedIndex();
+            serviceDay = dayCombo.getSelectedIndex() + 1;
+            serviceDesc = servDescTextField.getText();
+            servicePrice = Double.parseDouble(tempPrice);
+            test = true;
+        }
+        return test;
+    }
+
+    public Boolean serviceEntryValidation() {
+        String testYear = servYearTextField.getText().trim();
+        //checkYear(testYear)
+
+        if (monthCombo.getSelectedIndex() == -1) {
+            displayMessage("Please choose a service month.");
+            return false;
+        } else if (dayCombo.getSelectedIndex() == -1) {
+            displayMessage("Please choose a service day.");
+            return false;
+        } else if (monthCombo.getSelectedIndex() == -1) {
+            displayMessage("Please choose a service month.");
+            return false;
+        } else if (servicePrice < 0) {
+            displayMessage("Please provide positive service price.");
+            return false;
+        } else if (serviceDesc.length() == 0) {
+            displayMessage("Please enter a short service description.");
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public void setVehicleBrowsing(boolean tf) {
@@ -1216,8 +1446,8 @@ public class VSMSView extends JFrame implements IVSMSView {
             JOptionPane.showMessageDialog(null, "Please Enter a year");
             servYearTextField.requestFocus();
             return false;
-        } else if (tempYear.matches("\\D+")) {
-            JOptionPane.showMessageDialog(null, "Please Enter only digits");
+        } else if (!tempYear.matches("\\d+")) {
+            JOptionPane.showMessageDialog(null, "Please enter only digits for year value.");
             servYearTextField.requestFocus();
             return false;
         } else if (tempYear.length() > 4) {
@@ -1225,7 +1455,7 @@ public class VSMSView extends JFrame implements IVSMSView {
             servYearTextField.requestFocus();
             return false;
         } else if (i == 0) {
-            if (Integer.parseInt(servYearTextField.getText().trim()) < 1900 || Integer.parseInt(servYearTextField.getText().trim()) < cyear - 1) {
+            if (Integer.parseInt(servYearTextField.getText().trim()) < 1900 || Integer.parseInt(servYearTextField.getText().trim()) < cyear) {
                 JOptionPane.showMessageDialog(null, "Can't enter a service for a year that has passed. Current year: " + cyear);
                 servYearTextField.requestFocus();
                 return false;
@@ -1257,6 +1487,19 @@ public class VSMSView extends JFrame implements IVSMSView {
             dayCombo.setSelectedItem(testing + 1);
         }
 
+    }
+
+    public boolean isValidRego(String s) {
+        String n = ".*[0-9].*";
+        String a = ".*[A-Z].*";
+        return s.matches(n) && s.matches(a);
+    }
+
+    public boolean isValidAddress(String s) {
+        String n = ".*[0-9].*";
+        String a = ".*[a-zA-Z].*";
+        String b = " ";
+        return s.matches(n) && s.matches(a);
     }
 
     public static void failedConnect(String m) {
