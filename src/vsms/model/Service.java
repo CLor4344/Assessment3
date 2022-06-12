@@ -14,13 +14,13 @@ public class Service {
     private int id;
     private Date date;
     private String description;
-    private int price;
+    private double price;
     private Vehicle carRego;
 
     public Service() {
     }
 
-    public Service(int id, Date date, String description, int price, Vehicle carRego) {
+    public Service(int id, Date date, String description, double price, Vehicle carRego) {
         this.id = id;
         this.date = date;
         this.description = description;
@@ -52,11 +52,11 @@ public class Service {
         this.description = description;
     }
 
-    public int getPrice() {
+    public double getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(double price) {
         this.price = price;
     }
 

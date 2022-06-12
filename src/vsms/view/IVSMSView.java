@@ -15,11 +15,28 @@ import vsms.presenter.VSMSPresenter;
  * @author Colbey
  */
 public interface IVSMSView {
+
     void bind(VSMSPresenter p);
+
     void displayMessage(String m);
-    void displayCustomers(List<Customer> c);
-    void displayServices(List<Service> c);
-    void displayVehicles(List<Vehicle> v);
+
+    void displayCustomersTable(List<Customer> c);
+
+    void displayServicesTable(List<Service> s);
+
+    void displayVehiclesTable(List<Vehicle> v);
+
+    void displayCustomers(Customer c);
+
+    void displayServices(Service c);
+
+    void displayVehicles(Vehicle v);
+    void vehicleMaxAndCurrent(int m, int c);
+
     void testing(List<String> ls);
-    
+
+    void setVehicleBrowsing(boolean tf);
+
+    void setServiceBrowsing(boolean tf);
+
 }
