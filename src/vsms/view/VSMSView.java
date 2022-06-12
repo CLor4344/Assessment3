@@ -4,7 +4,6 @@
  */
 package vsms.view;
 
-
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -1279,11 +1278,14 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void entryCustomerFields() {
-        
-        String cap = firstNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + firstNameTextField.getText().trim().toLowerCase().substring(1);
-        fName = cap;
-        String cap2 = lastNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + lastNameTextField.getText().trim().toLowerCase().substring(1);
-        lName = cap2;
+        if (firstNameTextField.getText().trim().length() != 0) {
+            String cap = firstNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + firstNameTextField.getText().trim().toLowerCase().substring(1);
+            fName = cap;
+        }
+        if (lastNameTextField.getText().trim().length() != 0) {
+            String cap2 = lastNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + lastNameTextField.getText().trim().toLowerCase().substring(1);
+            lName = cap2;
+        }
         phone = phoneTextField.getText();
         address = addressTextField.getText();
     }
