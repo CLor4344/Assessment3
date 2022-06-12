@@ -4,7 +4,7 @@
  */
 package vsms.view;
 
-import com.sun.xml.internal.ws.util.StringUtils;
+
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -1279,8 +1279,11 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void entryCustomerFields() {
-        fName = StringUtils.capitalize(firstNameTextField.getText().trim().toLowerCase());
-        lName = StringUtils.capitalize(lastNameTextField.getText().trim().toLowerCase());
+        
+        String cap = firstNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + firstNameTextField.getText().trim().toLowerCase().substring(1);
+        fName = cap;
+        String cap2 = lastNameTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + lastNameTextField.getText().trim().toLowerCase().substring(1);
+        lName = cap2;
         phone = phoneTextField.getText();
         address = addressTextField.getText();
     }
@@ -1311,8 +1314,10 @@ public class VSMSView extends JFrame implements IVSMSView {
     public Boolean entryVehicleFields() {
         boolean test = false;
         rego = regoTextField.getText().trim().toUpperCase();
-        make = StringUtils.capitalize(makeTextField.getText().trim().toLowerCase());
-        model = StringUtils.capitalize(modelTextField.getText().trim().toLowerCase());
+        String cap = makeTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + makeTextField.getText().trim().toLowerCase().substring(1);
+        String cap2 = modelTextField.getText().trim().toLowerCase().substring(0, 1).toUpperCase() + modelTextField.getText().trim().toLowerCase().substring(1);
+        make = cap;
+        model = cap2;
         String tempYear = carYearTextField.getText().trim();
         String tempOdo = vehOdometerTextField.getText().trim();
         if (tempYear.matches("")) {
