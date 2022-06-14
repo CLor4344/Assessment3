@@ -20,6 +20,7 @@ import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
+import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
@@ -85,6 +86,10 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JPanel topInfoPanel;
     private JPanel mainFramePanel;
     private JButton exitButton;
+    private JPanel queryRightRightPanel;
+    private JLabel queryByRegoLabel;
+    private JTextField queryByRegoTextField;
+    private JButton queryByRegoButton;
 
     //customer Panel components
     private JPanel custPanel;
@@ -103,10 +108,12 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JLabel phoneLabel;
     private JTextField phoneTextField;
     private JLabel addressLabel;
-    private JTextField addressTextField;
+    private JTextArea addressTextField;
+    private JScrollPane addressPane;
     private JButton addCustButton;
     private JButton updateCustButton;
     private JButton cancelCustButton;
+    private JButton backButton;
     private JButton saveCustButton;
     private JButton saveCustUpdButton;
     private JPanel custButtonCard;
@@ -137,6 +144,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JButton updateVehButton;
     private JButton cancelVehButton;
     private JButton saveVehButton;
+    private JButton saveVehUpdButton;
     private JPanel vehButtonCard;
 
     //veh cycle panel
@@ -160,7 +168,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     //  private JButton servPrevButton;
 
     private JButton addServButton;
-    private JButton updateServButton;
+    private JButton deleteServButton;
     private JButton cancelServButton;
     private JButton saveServButton;
     private JPanel servButtonCard;
@@ -218,9 +226,18 @@ public class VSMSView extends JFrame implements IVSMSView {
     private JTextField queryByPhoneTextField;
     private JButton queryByNameButton;
     private JButton queryByPhoneButton;
-    JFXPanel fxPanel = new JFXPanel();
 
     private JPanel tablePanel;
+
+    //statics panel elements
+    JFXPanel fxPanel = new JFXPanel();
+    private JTable displayMinMaxTable;
+    private JTable displayMakeTable;
+    private JScrollPane scrollPane4;
+    private JScrollPane scrollPane5;
+    private JPanel statMainPanel;
+    private JPanel statLeftPanel;
+    private JPanel statRightPanel;
 
     public VSMSView() {
         super("Vehical Service Management System");
@@ -260,6 +277,8 @@ public class VSMSView extends JFrame implements IVSMSView {
 
         tablePanel = new JPanel();
         bottomPanel = new JPanel();
+        backButton = new JButton();
+        backButton.setText("Back");
         exitButton = new JButton();
         exitButton.setText("EXIT");
         bottomPanel.add(exitButton);
@@ -275,22 +294,26 @@ public class VSMSView extends JFrame implements IVSMSView {
         phoneLabel = new JLabel("Phone:");
         phoneTextField = new JTextField(8);
         addressLabel = new JLabel("Address:");
-        addressTextField = new JTextField(10);
+
+        addressTextField = new JTextArea(3, 15);
+        JScrollPane addressPane = new JScrollPane(addressTextField);
+        addressTextField.setLineWrap(true);
 
         addCustButton = new JButton();
         addCustButton.setText("Add");
         updateCustButton = new JButton();
         updateCustButton.setText("Update");
         cancelCustButton = new JButton();
-        cancelCustButton.setText("Cancel");
+        cancelCustButton.setText("Clear");
         saveCustButton = new JButton();
         saveCustButton.setText("Save");
         saveCustUpdButton = new JButton();
         saveCustUpdButton.setText("Save");
 
         custButtonCard = new JPanel(new CardLayout());
-        custButtonCard.add(saveCustButton, "a");
-        custButtonCard.add(addCustButton, "b");
+
+        custButtonCard.add(addCustButton, "a");
+        custButtonCard.add(saveCustButton, "b");
         custButtonCard.add(saveCustUpdButton, "c");
 
         TitledBorder custPanelTitle;
@@ -299,14 +322,20 @@ public class VSMSView extends JFrame implements IVSMSView {
         custPanel.setLayout(new BoxLayout(custPanel, BoxLayout.PAGE_AXIS));
         minorCustPanel1.add(custIdLabel);
         minorCustPanel1.add(custIdTextField);
+        minorCustPanel1.add(Box.createHorizontalStrut(125));
         minorCustPanel2.add(firstNameLabel);
         minorCustPanel2.add(firstNameTextField);
+        minorCustPanel2.add(Box.createHorizontalStrut(125));
         minorCustPanel3.add(lastNameLabel);
         minorCustPanel3.add(lastNameTextField);
+        minorCustPanel3.add(Box.createHorizontalStrut(125));
         minorCustPanel4.add(phoneLabel);
+        minorCustPanel4.add(Box.createHorizontalStrut(12));
         minorCustPanel4.add(phoneTextField);
+        minorCustPanel4.add(Box.createHorizontalStrut(100));
         minorCustPanel5.add(addressLabel);
-        minorCustPanel5.add(addressTextField);
+        minorCustPanel5.add(addressPane);
+        minorCustPanel5.add(Box.createHorizontalStrut(105));
         minorCustPanel6.add(custButtonCard);
         minorCustPanel6.add(updateCustButton);
         minorCustPanel6.add(cancelCustButton);
@@ -320,11 +349,11 @@ public class VSMSView extends JFrame implements IVSMSView {
 
         //vehicle panel parts
         regoLabel = new JLabel("Registration:");
-        regoTextField = new JTextField(4);
+        regoTextField = new JTextField(5);
         makeLabel = new JLabel("Make:");
-        makeTextField = new JTextField(4);
+        makeTextField = new JTextField(6);
         modelLabel = new JLabel("Model:");
-        modelTextField = new JTextField(4);
+        modelTextField = new JTextField(6);
         carYearLabel = new JLabel("Year:");
         carYearTextField = new JTextField(4);
         vehOdometerLabel = new JLabel("Odometer:");
@@ -348,25 +377,36 @@ public class VSMSView extends JFrame implements IVSMSView {
 
         vehButtonCard = new JPanel(new CardLayout());
         addVehButton = new JButton();
+        saveVehUpdButton = new JButton();
         addVehButton.setText("Add");
         updateVehButton = new JButton();
         updateVehButton.setText("Update");
         cancelVehButton = new JButton();
-        cancelVehButton.setText("Cancel");
+        cancelVehButton.setText("Clear");
         saveVehButton = new JButton();
         saveVehButton.setText("Save");
+        saveVehUpdButton.setText("Save");
         addVehButton.setEnabled(false);
         vehButtonCard.add(addVehButton, "a");
         vehButtonCard.add(saveVehButton, "b");
+        vehButtonCard.add(saveVehUpdButton, "c");
 
         minorVehPanel1.add(regoLabel);
+        minorVehPanel1.add(Box.createHorizontalStrut(5));
         minorVehPanel1.add(regoTextField);
+        minorVehPanel1.add(Box.createHorizontalStrut(125));
         minorVehPanel2.add(makeLabel);
+        minorVehPanel2.add(Box.createHorizontalStrut(5));
         minorVehPanel2.add(makeTextField);
+        minorVehPanel2.add(Box.createHorizontalStrut(145));
         minorVehPanel3.add(modelLabel);
+        minorVehPanel3.add(Box.createHorizontalStrut(5));
         minorVehPanel3.add(modelTextField);
+        minorVehPanel3.add(Box.createHorizontalStrut(150));
         minorVehPanel4.add(carYearLabel);
+        minorVehPanel4.add(Box.createHorizontalStrut(5));
         minorVehPanel4.add(carYearTextField);
+        minorVehPanel4.add(Box.createHorizontalStrut(30));
         minorVehPanel4.add(vehOdometerLabel);
         minorVehPanel4.add(vehOdometerTextField);
         minorVehPanel5.add(vehButtonCard);
@@ -378,11 +418,16 @@ public class VSMSView extends JFrame implements IVSMSView {
         vehPanel.setBorder(vehPanelTitle);
         vehPanel.setLayout(new BoxLayout(vehPanel, BoxLayout.PAGE_AXIS));
         vehPanel.add(minorVehPanel1);
+        vehPanel.add(Box.createVerticalStrut(25));
         vehPanel.add(minorVehPanel2);
+        vehPanel.add(Box.createVerticalStrut(25));
         vehPanel.add(minorVehPanel3);
+        vehPanel.add(Box.createVerticalStrut(25));
         vehPanel.add(minorVehPanel4);
+        vehPanel.add(Box.createVerticalStrut(25));
         vehPanel.add(vehBrowsePanel);
         vehPanel.add(minorVehPanel5);
+        vehPanel.add(Box.createVerticalStrut(22));
 
         //vehPanel.add();
         //vehPanel.add();
@@ -403,30 +448,37 @@ public class VSMSView extends JFrame implements IVSMSView {
                 new GridLayout(2, 1));
         servYearTextField = new JTextField(3);
         servPriceTextField = new JTextField(6);
-        //minorServPanel2.setBackground(Color.red);
 
         addServButton = new JButton();
         addServButton.setText("Add");
         addServButton.setEnabled(false);
-        updateServButton = new JButton();
-        updateServButton.setText("Update");
+        deleteServButton = new JButton();
+        deleteServButton.setText("Delete");
         cancelServButton = new JButton();
-        cancelServButton.setText("Cancel");
+        cancelServButton.setText("Clear");
 
         minorServPanel1.add(servIdLabel);
         minorServPanel1.add(servIdTextField);
+        minorServPanel1.add(Box.createHorizontalStrut(155));
+        minorServPanel2.add(Box.createHorizontalStrut(40));
         minorServPanel2.add(servYearLabel);
+        minorServPanel2.add(Box.createHorizontalStrut(25));
         minorServPanel2.add(servMonthLabel);
+        minorServPanel2.add(Box.createHorizontalStrut(40));
         minorServPanel2.add(servDayLabel);
+        minorServPanel2.add(Box.createHorizontalStrut(40));
         minorServPanel3.add(servDateLabel);
         minorServPanel3.add(servYearTextField);
 
         dayCombo.addItem("Day");
         dayCombo.setEnabled(false);
         dayCombo.setToolTipText("Choose a month and year first.");
+        dayCombo.setPrototypeDisplayValue("XXX");
+
         minorServPanel3.add(monthCombo);
         minorServPanel3.add(dayCombo);
         monthCombo.setSelectedIndex(-1);
+        monthCombo.setPrototypeDisplayValue("SEPTEMBER");
 
         servButtonCard = new JPanel(new CardLayout());
         saveServButton = new JButton();
@@ -439,10 +491,11 @@ public class VSMSView extends JFrame implements IVSMSView {
         servDatePanel.add(minorServPanel3);
         minorServPanel4.add(servPriceLabel);
         minorServPanel4.add(servPriceTextField);
+        minorServPanel4.add(Box.createHorizontalStrut(115));
         minorServPanel5.add(servDescLabel);
         minorServPanel5.add(descScrollPane);
         minorServPanel6.add(servButtonCard);
-        minorServPanel6.add(updateServButton);
+        minorServPanel6.add(deleteServButton);
         minorServPanel6.add(cancelServButton);
 
         servBrowsePanel = new JPanel();
@@ -464,17 +517,18 @@ public class VSMSView extends JFrame implements IVSMSView {
         TitledBorder servPanelTitle;
         servPanelTitle = BorderFactory.createTitledBorder("Services");
         servPanel.setBorder(servPanelTitle);
-        servPanel.setBorder(vehPanelTitle);
+        servPanel.setBorder(servPanelTitle);
         servPanel.setLayout(new BoxLayout(servPanel, BoxLayout.PAGE_AXIS));
         servPanel.add(minorServPanel1);
-        servPanel.add(Box.createVerticalStrut(25));
+        //servPanel.add(Box.createVerticalStrut(25));
         servPanel.add(servDatePanel);
-        servPanel.add(Box.createVerticalStrut(25));
+        //servPanel.add(Box.createVerticalStrut(25));
         servPanel.add(minorServPanel4);
         servPanel.add(minorServPanel5);
+
         servPanel.add(servBrowsePanel);
         servPanel.add(minorServPanel6);
-        servPanel.add(Box.createVerticalStrut(25));
+        servPanel.add(Box.createVerticalStrut(17));
 
         //display table and panel
         displayCard = new JPanel(new CardLayout());
@@ -517,7 +571,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         //displayVehTable.getColumn(1).setMaxWidth(0);
         // displayVehTable.getColumn(1).setWidth(0);
         displayServTable = new JTable();
-        DefaultTableModel myServModel = new DefaultTableModel(new Object[][]{}, new String[]{"CustomerID", "ServiceID", "First Name", "Last Name", "Registration", "Description", "Price"}) {
+        DefaultTableModel myServModel = new DefaultTableModel(new Object[][]{}, new String[]{"CustomerID", "ServiceID", "Owner", "Date", "Registration", "Description", "Price"}) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 //all cells false
@@ -566,20 +620,28 @@ public class VSMSView extends JFrame implements IVSMSView {
         queryPanel = new JPanel();
         queryLeftPanel = new JPanel();
         queryRightPanel = new JPanel();
+        queryRightRightPanel = new JPanel();
 
         TitledBorder phoneQueryTitle;
-        phoneQueryTitle = BorderFactory.createTitledBorder("Search by Phone");
+        phoneQueryTitle = BorderFactory.createTitledBorder("Search Customer by Phone");
         queryLeftPanel.setBorder(phoneQueryTitle);
         TitledBorder nameQueryTitle;
-        nameQueryTitle = BorderFactory.createTitledBorder("Search by Name");
+        nameQueryTitle = BorderFactory.createTitledBorder("Search Customer by Name");
         queryRightPanel.setBorder(nameQueryTitle);
+        TitledBorder regoQueryTitle;
+        regoQueryTitle = BorderFactory.createTitledBorder("Search Service by Rego");
+        queryRightRightPanel.setBorder(regoQueryTitle);
 
-        queryByNameLabel = new JLabel("Last Name");
+        queryByNameLabel = new JLabel("Last Name:");
         queryByNameTextField = new JTextField(10);
         queryByPhoneLabel = new JLabel("Phone:");
         queryByPhoneTextField = new JTextField(10);
         queryByNameButton = new JButton("Search");
         queryByPhoneButton = new JButton("Search");
+
+        queryByRegoLabel = new JLabel("Rego:");
+        queryByRegoTextField = new JTextField(10);
+        queryByRegoButton = new JButton("Search");
 
         queryLeftPanel.add(queryByPhoneLabel);
         queryLeftPanel.add(queryByPhoneTextField);
@@ -589,8 +651,57 @@ public class VSMSView extends JFrame implements IVSMSView {
         queryRightPanel.add(queryByNameTextField);
         queryRightPanel.add(queryByNameButton);
 
+        queryRightRightPanel.add(queryByRegoLabel);
+        queryRightRightPanel.add(queryByRegoTextField);
+        queryRightRightPanel.add(queryByRegoButton);
+
         queryPanel.add(queryLeftPanel);
         queryPanel.add(queryRightPanel);
+        queryPanel.add(queryRightRightPanel);
+
+        //Statistics Page ELEMENTS
+        fxPanel.setScene(new Scene(testPane, 600, 400));
+
+        displayMinMaxTable = new JTable();
+        DefaultTableModel myAvgModel = new DefaultTableModel(new Object[][]{}, new String[]{"Min", "Max", "Average"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                //all cells false
+                return false;
+            }
+        };
+        displayMakeTable = new JTable();
+        DefaultTableModel myMakeModel = new DefaultTableModel(new Object[][]{}, new String[]{"Make", "Number of services"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                //all cells false
+                return false;
+            }
+        };
+        displayMinMaxTable.setModel(myAvgModel);
+        displayMinMaxTable.setPreferredScrollableViewportSize(new Dimension(300, 50));
+        displayMinMaxTable.setFillsViewportHeight(true);
+        displayMinMaxTable.getTableHeader().setReorderingAllowed(false);
+        displayMinMaxTable.getTableHeader().setEnabled(false);
+        displayMinMaxTable.setAutoCreateRowSorter(false);
+
+        displayMakeTable.setModel(myMakeModel);
+        displayMakeTable.setPreferredScrollableViewportSize(new Dimension(250, 200));
+        displayMakeTable.setFillsViewportHeight(true);
+        displayMakeTable.getTableHeader().setReorderingAllowed(false);
+        displayMakeTable.getTableHeader().setEnabled(false);
+        displayMakeTable.setAutoCreateRowSorter(false);
+
+        scrollPane4 = new JScrollPane(displayMinMaxTable);
+        scrollPane5 = new JScrollPane(displayMakeTable);
+
+        statMainPanel = new JPanel();
+        statLeftPanel = new JPanel();
+        statRightPanel = new JPanel();
+        statLeftPanel.add(scrollPane4);
+        statRightPanel.add(scrollPane5);
+        statMainPanel.add(statLeftPanel);
+        statMainPanel.add(statRightPanel);
 
         //top information panel
         topInfoPanel.setLayout(
@@ -618,11 +729,13 @@ public class VSMSView extends JFrame implements IVSMSView {
         dataTitleMain = BorderFactory.createTitledBorder("Data Entry, Browse & Query");
 
         mainFramePanel.setBorder(dataTitleMain);
-
+        mainPanelGraphs.setLayout(new BoxLayout(mainPanelGraphs, BoxLayout.PAGE_AXIS));
         mainFramePanel.add(Box.createHorizontalStrut(40));
         mainFramePanel.add(mainPanel);
         //scrollPane1 = new JScrollPane(mainPanelGraphs);
         mainPanelGraphs.add(fxPanel);
+        mainPanelGraphs.add(statMainPanel);
+        mainPanelGraphs.add(backButton);
         mainFramePanel.add(Box.createHorizontalStrut(40));
         mainPanelCard.add(mainFramePanel, "a");
         mainPanelCard.add(mainPanelGraphs, "b");
@@ -651,8 +764,9 @@ public class VSMSView extends JFrame implements IVSMSView {
         disableServiceField();
         updateCustButton.setEnabled(false);
         updateVehButton.setEnabled(false);
-        updateServButton.setEnabled(false);
+        deleteServButton.setEnabled(false);
         servIdTextField.setEditable(false);
+        disableCustomerField();
 
         add(mainPanelCard);
 
@@ -675,19 +789,29 @@ public class VSMSView extends JFrame implements IVSMSView {
         ); // end call to addWindowListener
 
         //button listeners
-        tableButton2.addActionListener(
-                new ActionListener() {
-
-            public void actionPerformed(ActionEvent evt) {
-                testButtonActionPerformed(evt);
-            } // end method actionPerformed
-        } // end anonymous inner class
-        ); // end call to addActionListener
+        tableButton2.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        testButtonActionPerformed(e);
+                    }
+                });
+            }
+        });
         exitButton.addActionListener(
                 new ActionListener() {
 
             public void actionPerformed(ActionEvent evt) {
                 exitButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        backButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                backButtonActionPerformed(evt);
             } // end method actionPerformed
         } // end anonymous inner class
         ); // end call to addActionListener
@@ -739,6 +863,99 @@ public class VSMSView extends JFrame implements IVSMSView {
 
             public void actionPerformed(ActionEvent evt) {
                 saveCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        updateCustButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                updateCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        cancelCustButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                cancelCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+
+        queryByNameButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                nameQueryCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        queryByPhoneButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                phoneQueryCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+
+        queryByRegoButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                regoQueryCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        cancelVehButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                cancelVehicleButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        cancelServButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                cancelServiceButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+
+        saveCustUpdButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                saveUpdateCustomerButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+
+        updateVehButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+
+                updateVehicleButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        saveVehUpdButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                saveUpdateVehicleButtonActionPerformed(evt);
+            } // end method actionPerformed
+        } // end anonymous inner class
+        ); // end call to addActionListener
+        deleteServButton.addActionListener(
+                new ActionListener() {
+
+            public void actionPerformed(ActionEvent evt) {
+                deleteServiceButtonActionPerformed(evt);
             } // end method actionPerformed
         } // end anonymous inner class
         ); // end call to addActionListener
@@ -862,9 +1079,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         if (table.equals(displayCustTable)) {
             if (table.getValueAt(row, column) instanceof Integer) {
                 cid = (Integer) table.getValueAt(row, column);
-                //presenter.(pid);
-                //tableClick();
-                presenter.getCustomerVehicles(cid, "");
+                presenter.getCustomerVehicles(cid, "", -1);
 
             }
 
@@ -873,10 +1088,7 @@ public class VSMSView extends JFrame implements IVSMSView {
             if (table.getValueAt(row, column2) instanceof String) {
                 int tempId = (Integer) table.getValueAt(row, 0);
                 String tempString = (String) table.getValueAt(row, 2);
-                //String[] stringarray = tempId.split(":");
-                //pid = Integer.parseInt(stringarray[0]);
-                //lastNameTextField.setText(tempId);
-                presenter.getCustomerVehicles(tempId, tempString);
+                presenter.getCustomerVehicles(tempId, tempString, -1);
 
             }
 
@@ -891,7 +1103,7 @@ public class VSMSView extends JFrame implements IVSMSView {
                 //pid = Integer.parseInt(stringarray[0]);
 
                 firstNameTextField.setText(tempString);
-                presenter.getCustomerVehicles(tempCId, tempString);
+                presenter.getCustomerVehicles(tempCId, tempString, tempSId);
 
             }
 
@@ -902,6 +1114,11 @@ public class VSMSView extends JFrame implements IVSMSView {
 
     private void exitButtonActionPerformed(ActionEvent evt) {
         presenter.exitWindow();
+    }
+
+    private void backButtonActionPerformed(ActionEvent evt) {
+        CardLayout cL1 = (CardLayout) mainPanelCard.getLayout();
+        cL1.show(mainPanelCard, "a");
     }
 
     private void vehNextButtonActionPerformed(ActionEvent evt) {
@@ -952,7 +1169,8 @@ public class VSMSView extends JFrame implements IVSMSView {
         if (entryServiceFields()) {
             if (serviceEntryValidation()) {
                 clearServiceField();
-                presenter.addService(year, serviceMonth, serviceDay, servicePrice, serviceDesc, regoTextField.getText(), Integer.parseInt(custIdTextField.getText()));
+
+                presenter.addService(serviceYear, serviceMonth, serviceDay, servicePrice, serviceDesc, regoTextField.getText(), Integer.parseInt(custIdTextField.getText()));
                 CardLayout cL1 = (CardLayout) servButtonCard.getLayout();
                 cL1.show(servButtonCard, "a");
             }
@@ -960,17 +1178,135 @@ public class VSMSView extends JFrame implements IVSMSView {
 
     }
 
-    private void testingMatchButtonActionPerformed(ActionEvent evt) {
+    private void updateCustomerButtonActionPerformed(ActionEvent evt) {
 
+        CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
+        cL1.show(custButtonCard, "c");
+        disableCustomerField();
+        phoneTextField.setEditable(true);
+        addressTextField.setEditable(true);
+        updateCustButton.setEnabled(false);
         entryCustomerFields();
-        if (customerEntryValidation()) {
-            // presenter.matchCustomer(fName, lName, phone, address);
+
+    }
+
+    private void saveUpdateCustomerButtonActionPerformed(ActionEvent evt) {
+
+        if (checkUpdate() == true) {
+            entryCustomerFields();
+            if (customerEntryValidation()) {
+                int reply = JOptionPane.showConfirmDialog(null, "Are you sure you want to update customer details?", "Update Confirmation", JOptionPane.YES_NO_OPTION);
+                if (reply == 0) {
+                    presenter.updateCustomer(Integer.parseInt(custIdTextField.getText()), phone, address);
+                    CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
+                    cL1.show(custButtonCard, "a");
+                    updateCustButton.setEnabled(true);
+                    phoneTextField.setEditable(false);
+                    addressTextField.setEditable(false);
+                }
+            }
+        } else {
+            displayMessage("No changes");
+            CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
+            cL1.show(custButtonCard, "a");
+            updateCustButton.setEnabled(true);
+            phoneTextField.setEditable(false);
+            addressTextField.setEditable(false);
+
         }
+
+    }
+
+    private void saveUpdateVehicleButtonActionPerformed(ActionEvent evt) {
+        if (isValidOdo(vehOdometerTextField.getText())) {
+            if (checkVehUpdate() == true) {
+                entryVehicleFields();
+                if (vehicleEntryValidation()) {
+                    int reply = JOptionPane.showConfirmDialog(null, "Are you sure you want to update vehicle odometer details?", "Update Confirmation", JOptionPane.YES_NO_OPTION);
+                    if (reply == 0) {
+                        presenter.updateVehicle(rego, odometer);
+                        CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+                        cL1.show(vehButtonCard, "a");
+                        updateVehButton.setEnabled(true);
+                        vehOdometerTextField.setEditable(false);
+                    }
+                }
+
+            } else {
+                displayMessage("No changes");
+                CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+                cL1.show(vehButtonCard, "a");
+                updateVehButton.setEnabled(true);
+                vehOdometerTextField.setEditable(false);
+
+            }
+        }
+
+    }
+
+    private void updateVehicleButtonActionPerformed(ActionEvent evt) {
+
+        CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+        cL1.show(vehButtonCard, "c");
+        disableVehicleField();
+        updateVehButton.setEnabled(false);
+        vehOdometerTextField.setEditable(true);
+        entryVehicleFields();
+
+    }
+
+    private void deleteServiceButtonActionPerformed(ActionEvent evt) {
+
+        int reply = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete the current service", "Service Deletion Confirmation", JOptionPane.YES_NO_OPTION);
+        if (reply == 0) {
+            int id = Integer.parseInt(servIdTextField.getText());
+            presenter.deleteService(id);
+            deleteServButton.setEnabled(true);
+            int tempCId = Integer.parseInt(custIdTextField.getText());
+            String tempRego = regoTextField.getText();
+            int tempSId = 0;
+
+            presenter.getCustomerVehicles(tempCId, tempRego, tempSId);
+
+        }
+    }
+
+    private void nameQueryCustomerButtonActionPerformed(ActionEvent evt) {
+        if (nameQueryCheck()) {
+            presenter.getCustomersByName(lName);
+            queryByNameTextField.setText("");
+        }
+    }
+
+    private void regoQueryCustomerButtonActionPerformed(ActionEvent evt) {
+        if (regoQueryCheck()) {
+            presenter.getServiceByRego(rego);
+            queryByRegoTextField.setText("");
+        }
+    }
+
+    private void phoneQueryCustomerButtonActionPerformed(ActionEvent evt) {
+        if (phoneQueryCheck()) {
+            presenter.getCustomersByPhone(phone);
+            queryByPhoneTextField.setText("");
+        }
+    }
+
+    private void testingMatchButtonActionPerformed(ActionEvent evt) {
+        clearCustomerField();
+        disableCustomerField();
+        clearVehicleField();
+        disableVehicleField();
+        clearServiceField();
+        disableServiceField();
     }
     //temp button to test opening graph on new panel
 
     private void testButtonActionPerformed(ActionEvent evt) {
         presenter.testingCount();
+        presenter.getMakeService();
+        presenter.getMinMaxService();
+
         CardLayout cL1 = (CardLayout) mainPanelCard.getLayout();
         cL1.show(mainPanelCard, "b");
     }
@@ -980,12 +1316,39 @@ public class VSMSView extends JFrame implements IVSMSView {
         presenter.getServicesList();
     }
 
+    private void cancelCustomerButtonActionPerformed(ActionEvent evt) {
+        clearCustomerField();
+        disableCustomerField();
+        updateCustButton.setEnabled(false);
+        CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
+        cL1.show(custButtonCard, "a");
+    }
+
+    private void cancelVehicleButtonActionPerformed(ActionEvent evt) {
+        clearVehicleField();
+        disableVehicleField();
+        setVehicleBrowsing(false);
+        updateVehButton.setEnabled(false);
+        CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+        cL1.show(vehButtonCard, "a");
+    }
+
+    private void cancelServiceButtonActionPerformed(ActionEvent evt) {
+        clearServiceField();
+        disableServiceField();
+        setServiceBrowsing(false);
+        deleteServButton.setEnabled(false);
+        CardLayout cL1 = (CardLayout) servButtonCard.getLayout();
+        cL1.show(servButtonCard, "a");
+    }
+
     private void addCustomerButtonActionPerformed(ActionEvent evt) {
         clearCustomerField();
         enableCustomerField();
+        updateCustButton.setEnabled(false);
         firstNameTextField.requestFocus();
         CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
-        cL1.show(custButtonCard, "a");
+        cL1.show(custButtonCard, "b");
     }
 
     private void saveCustomerButtonActionPerformed(ActionEvent evt) {
@@ -995,7 +1358,7 @@ public class VSMSView extends JFrame implements IVSMSView {
             presenter.addCustomer(fName, lName, phone, address);
             disableCustomerField();
             CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
-            cL1.show(custButtonCard, "b");
+            cL1.show(custButtonCard, "a");
         }
     }
 
@@ -1029,10 +1392,10 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void displayCustomersTable(List<Customer> c) {
 
         DefaultTableModel currentModel = (DefaultTableModel) this.displayCustTable.getModel();
-        //TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(((DefaultTableModel) displayTable.getModel()));
 
-        //sorter.setRowFilter(RowFilter.regexFilter("(?i)"));
-        //displayTable.setRowSorter(sorter);
+        CardLayout cL1 = (CardLayout) displayCard.getLayout();
+        cL1.show(displayCard, "a");
+
         int size = c.size();
 
         //adding data from presenter to the table   
@@ -1053,10 +1416,9 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void displayVehiclesTable(List<Vehicle> v) {
 
         DefaultTableModel currentModel = (DefaultTableModel) this.displayVehTable.getModel();
-        //TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(((DefaultTableModel) displayTable.getModel()));
 
-        //sorter.setRowFilter(RowFilter.regexFilter("(?i)"));
-        //displayTable.setRowSorter(sorter);
+        CardLayout cL1 = (CardLayout) displayCard.getLayout();
+        cL1.show(displayCard, "b");
         int size = v.size();
         //HUH
 
@@ -1078,21 +1440,55 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void displayServicesTable(List<Service> c) {
 
         DefaultTableModel currentModel = (DefaultTableModel) this.displayServTable.getModel();
-        //TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(((DefaultTableModel) displayTable.getModel()));
 
-        //sorter.setRowFilter(RowFilter.regexFilter("(?i)"));
-        //displayTable.setRowSorter(sorter);
+        CardLayout cL1 = (CardLayout) displayCard.getLayout();
+        cL1.show(displayCard, "c");
         int size = c.size();
 
         for (int i = 0; i < size; i++) {
             Object[] data = new Object[7];
             data[0] = c.get(i).getCarRego().getCustomer().getId();
             data[1] = c.get(i).getId();
-            data[2] = c.get(i).getCarRego().getCustomer().getFirstName();
-            data[3] = c.get(i).getCarRego().getCustomer().getLastName();
+            data[2] = c.get(i).getCarRego().getCustomer().getFirstName() + " " + c.get(i).getCarRego().getCustomer().getLastName();
+            data[3] = c.get(i).getDate();
             data[4] = c.get(i).getCarRego().getRegistration();
             data[5] = c.get(i).getDescription();
             data[6] = "$" + String.format("%.2f", c.get(i).getPrice());
+            currentModel.setRowCount(i);
+            currentModel.addRow(data);
+        }
+
+    }
+    //displaying services on the table
+
+    public void displayMinMaxTable(List<Double> d) {
+
+        DefaultTableModel currentModel = (DefaultTableModel) this.displayMinMaxTable.getModel();
+
+        Object[] data = new Object[3];
+        data[0] = "$" + String.format("%.2f", d.get(0));
+        data[1] = "$" + String.format("%.2f", d.get(1));
+        data[2] = "$" + String.format("%.2f", d.get(2));
+
+        currentModel.setRowCount(0);
+        currentModel.addRow(data);
+
+    }
+
+    public void displayMakeTable(List<String> s) {
+
+        DefaultTableModel currentModel = (DefaultTableModel) this.displayMakeTable.getModel();
+        int size = s.size();
+
+        for (int i = 0; i < size; i++) {
+            String[] split = s.get(i).toString().split(":", -1);
+            String makeOne = split[0];
+            int countOne = Integer.parseInt(split[1]);
+
+            Object[] data = new Object[2];
+            data[0] = makeOne;
+            data[1] = countOne;
+
             currentModel.setRowCount(i);
             currentModel.addRow(data);
         }
@@ -1106,6 +1502,9 @@ public class VSMSView extends JFrame implements IVSMSView {
         phoneTextField.setText(c.getPhone());
         addressTextField.setText(c.getAddress());
         addVehButton.setEnabled(true);
+        disableCustomerField();
+        CardLayout cL1 = (CardLayout) custButtonCard.getLayout();
+        cL1.show(custButtonCard, "a");
 
     }
 
@@ -1115,16 +1514,30 @@ public class VSMSView extends JFrame implements IVSMSView {
         modelTextField.setText(v.getModel());
         carYearTextField.setText(String.valueOf(v.getYear()));
         vehOdometerTextField.setText(String.valueOf(v.getOdometer()));
+        CardLayout cL1 = (CardLayout) vehButtonCard.getLayout();
+        cL1.show(vehButtonCard, "a");
         addServButton.setEnabled(true);
     }
 
     public void displayServices(Service s) {
+        Calendar c = Calendar.getInstance();
         String temp = String.format("%.2f", s.getPrice());
         servIdTextField.setText(String.valueOf(s.getId()));
         servIdTextField.setText(String.valueOf(s.getId()));
         servPriceTextField.setText("$" + temp);
         servDescTextField.setText(s.getDescription());
         servIdTextField.setText(String.valueOf(s.getId()));
+        c.setTime(s.getDate());
+
+        servYearTextField.setText(String.valueOf(c.get(Calendar.YEAR)));
+        servYearTextField.setEditable(false);
+        monthCombo.setSelectedIndex(c.get(Calendar.MONTH));
+
+        setDayNum(c.get(Calendar.MONTH), c.get(Calendar.YEAR));
+        dayCombo.setSelectedIndex(c.get(Calendar.DAY_OF_MONTH) - 1);
+
+        CardLayout cL1 = (CardLayout) servButtonCard.getLayout();
+        cL1.show(servButtonCard, "a");
 
     }
 
@@ -1136,51 +1549,6 @@ public class VSMSView extends JFrame implements IVSMSView {
     public void serviceMaxAndCurrent(int m, int c) {
         servDenTextField.setText("" + m);
         servNumTextField.setText("" + (c + 1));
-    }
-
-    public void testing(List<String> ls) {
-        String makeOne = "";
-        int countOne = 0;
-        String makeTwo = "";
-        int countTwo = 0;
-        String makeThree = "";
-        int countThree = 0;
-        if (ls.size() == 3) {
-
-            String[] split = ls.get(0).toString().split(":", -1);
-            makeOne = split[0];
-            countOne = Integer.parseInt(split[1]);
-
-            split = ls.get(1).toString().split(":", -1);
-            makeTwo = split[0];
-            countTwo = Integer.parseInt(split[1]);
-
-            split = ls.get(2).toString().split(":", -1);
-            makeThree = split[0];
-            countThree = Integer.parseInt(split[1]);
-        }
-
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Vehicle Make");
-
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Number Of Services");
-
-        BarChart barChart = new BarChart(xAxis, yAxis);
-
-        XYChart.Series data = new XYChart.Series();
-        data.setName("Cars Serviced by Make");
-
-        data.getData().add(new XYChart.Data(makeOne, countOne));
-        data.getData().add(new XYChart.Data(makeTwo, countTwo));
-        data.getData().add(new XYChart.Data(makeThree, countThree));
-        barChart.getData().add(data);
-        //scrollPane1.add(barChart);
-        //Scene scene = createScene();
-        testPane.setCenter(barChart);
-
-        fxPanel.setScene(new Scene(testPane));
-
     }
 
     public void enableCustomerField() {
@@ -1244,7 +1612,7 @@ public class VSMSView extends JFrame implements IVSMSView {
     }
 
     public void setServiceUpdate(boolean tf) {
-        updateServButton.setEnabled(tf);
+        deleteServButton.setEnabled(tf);
     }
 
     public void clearCustomerField() {
@@ -1301,6 +1669,10 @@ public class VSMSView extends JFrame implements IVSMSView {
             return test;
         } else if (phone.matches("\\D+")) {
             displayMessage("Phone number must contain only digits");
+            phoneTextField.requestFocus();
+            return test;
+        } else if (phone.length() != 10) {
+            displayMessage("Phone number must be 10 digits");
             phoneTextField.requestFocus();
             return test;
         } else if (!isValidAddress(address)) {
@@ -1382,6 +1754,7 @@ public class VSMSView extends JFrame implements IVSMSView {
         String n = ".*[0-9].*";
 
         String tempPrice = servPriceTextField.getText().trim();
+        int count = tempPrice.length() - tempPrice.replace(".", "").length();
         if (servYearTextField.getText().trim().length() == 0) {
             displayMessage("Please choose a service date.");
         } else if (!servYearTextField.getText().trim().matches("\\d+")) {
@@ -1400,8 +1773,13 @@ public class VSMSView extends JFrame implements IVSMSView {
             displayMessage("Price field cannot contain spaces.");
             servPriceTextField.requestFocus();
             return test;
+        } else if (count > 1) {
+            displayMessage("Price can have only one decimal.");
+            servPriceTextField.requestFocus();
+            return test;
         } else {
             serviceYear = Integer.parseInt(servYearTextField.getText().trim());
+
             serviceMonth = monthCombo.getSelectedIndex();
             serviceDay = dayCombo.getSelectedIndex() + 1;
             serviceDesc = servDescTextField.getText();
@@ -1461,12 +1839,6 @@ public class VSMSView extends JFrame implements IVSMSView {
             JOptionPane.showMessageDialog(null, "Year must be four digits");
             servYearTextField.requestFocus();
             return false;
-        } else if (i == 0) {
-            if (Integer.parseInt(servYearTextField.getText().trim()) < 1900 || Integer.parseInt(servYearTextField.getText().trim()) < cyear) {
-                JOptionPane.showMessageDialog(null, "Can't enter a service for a year that has passed. Current year: " + cyear);
-                servYearTextField.requestFocus();
-                return false;
-            }
         }
         return true;
     }
@@ -1496,10 +1868,15 @@ public class VSMSView extends JFrame implements IVSMSView {
 
     }
 
-    public boolean isValidRego(String s) {
-        String n = ".*[0-9].*";
-        String a = ".*[A-Z].*";
-        return s.matches(n) && s.matches(a);
+    public boolean isValidOdo(String s) {
+
+        if (!s.matches("\\d+")) {
+            displayMessage("Odometer must be digits only.");
+            vehOdometerTextField.requestFocus();
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public boolean isValidAddress(String s) {
@@ -1507,6 +1884,119 @@ public class VSMSView extends JFrame implements IVSMSView {
         String a = ".*[a-zA-Z].*";
         String b = " ";
         return s.matches(n) && s.matches(a);
+    }
+
+    public boolean checkUpdate() {
+        boolean change = true;
+        if (phone.equals(phoneTextField.getText()) && address.equals(addressTextField.getText())) {
+            change = false;
+        }
+        return change;
+    }
+
+    public boolean checkVehUpdate() {
+        boolean change = true;
+        String tempOdo = vehOdometerTextField.getText();
+
+        if (!tempOdo.matches("\\d+")) {
+            displayMessage("Odometer must be digits only.");
+            vehOdometerTextField.requestFocus();
+            change = false;
+        } else if (odometer == Integer.parseInt(vehOdometerTextField.getText())) {
+            change = false;
+        }
+        return change;
+    }
+
+    public boolean nameQueryCheck() {
+        boolean test = false;
+        lName = queryByNameTextField.getText();
+        if (lName.length() == 0) {
+            displayMessage("Please enter a last name to search.");
+            queryByNameTextField.requestFocus();
+            return test;
+        } else if (!lName.matches("\\D+")) {
+            displayMessage("Names must not contain digits");
+            queryByNameTextField.requestFocus();
+            return test;
+        } else {
+            test = true;
+        }
+        return test;
+    }
+
+    public boolean phoneQueryCheck() {
+        boolean test = false;
+        phone = queryByPhoneTextField.getText();
+        if (phone.length() == 0) {
+            displayMessage("Please enter a phone number to search.");
+            return test;
+        } else if (!phone.matches("\\d+")) {
+            displayMessage("Phone number must contain only digits");
+            return test;
+        } else if (phone.length() != 10) {
+            displayMessage("Phone number must be 10 digits.");
+            return test;
+        } else {
+            test = true;
+        }
+        return test;
+    }
+
+    public boolean regoQueryCheck() {
+        boolean test = false;
+        rego = queryByRegoTextField.getText();
+        if (rego.length() == 0) {
+            displayMessage("Please enter a rego number to search.");
+            return test;
+        } else if (rego.length() < 3 || rego.length() > 7) {
+            displayMessage("Rego number must be between 3 and service characters.");
+            return test;
+        } else {
+            test = true;
+        }
+        return test;
+    }
+
+    public void testing(List<String> ls) {
+        String makeOne = "";
+        int countOne = 0;
+        String makeTwo = "";
+        int countTwo = 0;
+        String makeThree = "";
+        int countThree = 0;
+        if (ls.size() == 3) {
+
+            String[] split = ls.get(0).toString().split(":", -1);
+            makeOne = split[0];
+            countOne = Integer.parseInt(split[1]);
+
+            split = ls.get(1).toString().split(":", -1);
+            makeTwo = split[0];
+            countTwo = Integer.parseInt(split[1]);
+
+            split = ls.get(2).toString().split(":", -1);
+            makeThree = split[0];
+            countThree = Integer.parseInt(split[1]);
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Vehicle Make");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Number Of Services");
+
+        BarChart barChart = new BarChart(xAxis, yAxis);
+
+        XYChart.Series data = new XYChart.Series();
+        data.setName("Cars Serviced by Make");
+
+        data.getData().add(new XYChart.Data(makeOne, countOne));
+        data.getData().add(new XYChart.Data(makeTwo, countTwo));
+        data.getData().add(new XYChart.Data(makeThree, countThree));
+        barChart.getData().add(data);
+        testPane.setCenter(barChart);
+
     }
 
     public static void failedConnect(String m) {

@@ -39,6 +39,8 @@ public interface IVSMSView {
     void setVehicleBrowsing(boolean tf);
 
     void setServiceBrowsing(boolean tf);
+    void displayMinMaxTable(List<Double> d);
+    void displayMakeTable(List<String> s);
     
     //field clearing and enable/disable
     void disableServiceField();

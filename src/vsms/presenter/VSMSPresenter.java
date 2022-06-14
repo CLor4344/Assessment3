@@ -26,12 +26,14 @@ public class VSMSPresenter {
     int numberOfEntries;
     int currentServIndexNumber;
     int numberOfServEntries;
+    Service currentFieldServ;
     Vehicle currentVeh;
     Service currentServ;
     Customer currentCustomer;
     List<Customer> customerResults;
     List<Vehicle> vehicleResults;
     List<Service> serviceResults;
+    List<Service> serviceFieldResults;
 
     public VSMSPresenter(IVSMSView ivv, IVSMSModel ivm) {
         view = ivv;
@@ -42,6 +44,8 @@ public class VSMSPresenter {
         customerResults = null;
         vehicleResults = null;
         serviceResults = null;
+        serviceFieldResults = null;
+        currentFieldServ = null;
         currentServIndexNumber = 0;
         numberOfServEntries = 0;
 
@@ -81,25 +85,59 @@ public class VSMSPresenter {
 
     public void addVehicle(String rego, String make, String mod, int year, int odometer, int cid) {
         int testing = model.insertVehicle(rego, make, mod, year, odometer, cid);
+        int fakeint = -1;
         if (testing == 0) {
             view.displayMessage("Vehcile " + rego + " was not added.");
         } else {
             view.displayMessage("Vehcile " + rego + " was added.");
-            getCustomerVehicles(cid, rego);
+            getCustomerVehicles(cid, rego, fakeint);
         }
 
     }
 
     public void addService(int year, int month, int day, double price, String desc, String rego, int cid) {
+
         Calendar c = Calendar.getInstance();
         c.set(year, month, day);
         java.sql.Date date = new java.sql.Date(c.getTimeInMillis());//converting date obect to sql.Date object
+        int fakeint = -1;
+
         int testing = model.insertService(date, price, desc, rego);
         if (testing == 0) {
             view.displayMessage("Vehcile " + rego + " was not added.");
         } else {
             view.displayMessage("Service was added.");
-            getServices(cid, rego);;
+            getServices(cid, rego, fakeint);
+        }
+    }
+
+    public void updateCustomer(int id, String phone, String address) {
+        int test = model.updateCustomer(id, phone, address);
+        if (test == 0) {
+            view.displayMessage("No updates were made.");
+        } else {
+            view.displayMessage("Customer has been updated.");
+        }
+
+    }
+
+    public void updateVehicle(String rego, int odometer) {
+        int test = model.updateVehicle(rego, odometer);
+        if (test == 0) {
+            view.displayMessage("No updates were made.");
+        } else {
+            view.displayMessage("Customer has been updated.");
+        }
+
+    }
+
+    public void deleteService(int id) {
+        int test = model.removeSerive(id);
+        if (test == 0) {
+            view.displayMessage("No services were deleted.");
+        } else {
+            view.displayMessage("Service has been removed.");
+            getServicesList();
         }
     }
 
@@ -110,9 +148,22 @@ public class VSMSPresenter {
 
     }
 
+    public void getMinMaxService() {
+        List test = new ArrayList<String>();
+        test = model.getMinMax();
+        populateMinMaxTable(test);
+
+    }
+
+    public void getMakeService() {
+        List test = new ArrayList<String>();
+        test = model.getMakeInfo();
+        populateMakeTable(test);
+
+    }
+
     public void getServicesList() {
         try {
-            ResultSet rs = null;
             List<Service> testing = model.allServices();
             populateServiceTables(testing);
 
@@ -145,18 +196,58 @@ public class VSMSPresenter {
 
     public void getAllCustomers() {
         try {
-            ResultSet rs = null;
-            List<Customer> testing = model.getAllCustomers();
-            populateCustomerTable(testing);
+
+            customerResults = model.getAllCustomers();
+            populateCustomerTable(customerResults);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void getCustomerVehicles(int id, String rego) {
+    public void getCustomersByName(String name) {
 
-        vehicleResults = model.getCustomerVehicles(id);
+        customerResults = model.getCustomerByName(name);
+        int search = customerResults.size();
+        if (search == 0) {
+            view.displayMessage("No results matching " + name);
+        } else {
+            view.displayMessage(search + " Matches Found!");
+            populateCustomerTable(customerResults);
+        }
+
+    }
+
+
+    public void getCustomersByPhone(String phone) {
+
+        customerResults = model.getCustomerByPhone(phone);
+        int search = customerResults.size();
+        if (search == 0) {
+            view.displayMessage("No results matching " + phone);
+        } else {
+            view.displayMessage("Match Found!");
+            populateCustomerTable(customerResults);
+        }
+
+    }
+
+    public void getServiceByRego(String rego) {
+
+        serviceResults = model.getServiceByRego(rego);
+        int search = serviceResults.size();
+        if (search == 0) {
+            view.displayMessage("No results matching " + rego);
+        } else {
+            view.displayMessage("Match Found!");
+            populateServiceTables(serviceResults);
+        }
+
+    }
+
+    public void getCustomerVehicles(int id, String rego, int exclude) {
+
+        vehicleResults = model.getCustomerVehicles(id, rego);
         numberOfEntries = vehicleResults.size();
         currentCustomer = model.getCustomer(id);
 
@@ -178,7 +269,7 @@ public class VSMSPresenter {
             view.setVehicleBrowsing(false);
             rego = currentVeh.getRegistration();
 
-            serviceResults = model.serviceByCIdRego(id, rego);
+            serviceResults = model.serviceByCIdRego(id, rego, exclude);
             numberOfServEntries = serviceResults.size();
             currentServIndexNumber = 0;
             if (numberOfServEntries == 0) {
@@ -204,14 +295,14 @@ public class VSMSPresenter {
             populateCustomerFields();
             view.setVehicleBrowsing(true);
             rego = currentVeh.getRegistration();
-            getServices(id, rego);
+            getServices(id, rego, exclude);
         }
 
     }
 
-    private void getServices(int id, String rego) {
+    private void getServices(int id, String rego, int exclude) {
         //rego = currentVeh.getRegistration();
-        serviceResults = model.serviceByCIdRego(id, rego);
+        serviceResults = model.serviceByCIdRego(id, rego, exclude);
         numberOfServEntries = serviceResults.size();
 
         if (numberOfServEntries == 0) {
@@ -240,23 +331,25 @@ public class VSMSPresenter {
 
     public void showNext() {
         currentIndexNumber++;
+        int fakeint = -1;
         if (currentIndexNumber >= numberOfEntries) {
             currentIndexNumber = 0;
         }
         currentVeh = vehicleResults.get(currentIndexNumber);
         populateVehicleFields();
-        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration());
+        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration(), fakeint);
 
     }
 
     public void showPrevious() {
         currentIndexNumber--;
+        int fakeint = -1;
         if (currentIndexNumber < 0) {
             currentIndexNumber = numberOfEntries - 1;
         }
         currentVeh = vehicleResults.get(currentIndexNumber);
         populateVehicleFields();
-        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration());
+        getServices(currentVeh.getCustomer().getId(), currentVeh.getRegistration(), fakeint);
     }
 
     public void servShowNext() {
@@ -281,6 +374,7 @@ public class VSMSPresenter {
     public void populateCustomerFields() {
         view.displayCustomers(currentCustomer);
         view.setCustomerUpdate(true);
+
     }
 
     public void populateVehicleFields() {
@@ -291,10 +385,10 @@ public class VSMSPresenter {
 
     public void newVehicleFields() {
         view.displayVehicles(currentVeh);
-
     }
 
     public void populateServiceFields() {
+
         view.displayServices(currentServ);
         view.serviceMaxAndCurrent(numberOfServEntries, currentServIndexNumber);
         view.setServiceUpdate(true);
@@ -310,6 +404,14 @@ public class VSMSPresenter {
 
     public void populateCustomerTable(List<Customer> testing) {
         view.displayCustomersTable(testing);
+    }
+
+    public void populateMinMaxTable(List<Double> testing) {
+        view.displayMinMaxTable(testing);
+    }
+
+    public void populateMakeTable(List<String> testing) {
+        view.displayMakeTable(testing);
     }
 
     public void exitWindow() {

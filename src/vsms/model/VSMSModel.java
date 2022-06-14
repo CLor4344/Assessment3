@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class VSMSModel implements IVSMSModel {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/carservicedb";
+    private static final String URL = "jdbc:mysql://localhost:3306/carservicedbtesti";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "pollop";
 
@@ -29,6 +29,9 @@ public class VSMSModel implements IVSMSModel {
     private PreparedStatement selectCustomerVehicles = null;
     private PreparedStatement insertNewCustomer = null;
     private PreparedStatement updateCustomer = null;
+    private PreparedStatement queryCustomerByName = null;
+    private PreparedStatement queryCustomerByPhone = null;
+    private PreparedStatement queryServiceByRego = null;
 
     private PreparedStatement insertNewVehicle = null;
     private PreparedStatement insertNewService = null;
@@ -38,6 +41,12 @@ public class VSMSModel implements IVSMSModel {
     private PreparedStatement selectAllServices = null;
     private PreparedStatement countMakeQuery = null;
     private PreparedStatement selectAllJoinByCID = null;
+    private PreparedStatement selectAllJoinByCIDExclude = null;
+    private PreparedStatement selectCustomerVehiclesExclude = null;
+    private PreparedStatement serviceCalculations = null;
+    private PreparedStatement serviceMakeInformation = null;
+
+    private PreparedStatement deleteSelectedService = null;
 
     private PreparedStatement selectVehicleById = null;
 
@@ -48,22 +57,48 @@ public class VSMSModel implements IVSMSModel {
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             selectAllCustomers = connection.prepareStatement("SELECT * FROM customers");
             selectCustomerById = connection.prepareStatement("SELECT * FROM customers WHERE customerid=?");
+            queryCustomerByName = connection.prepareStatement("SELECT * FROM customers WHERE lastname LIKE ?");
+            queryCustomerByPhone = connection.prepareStatement("SELECT * FROM customers WHERE phone=?");
+            queryServiceByRego = connection.prepareStatement("SELECT * FROM services As S \n"
+                    + "Inner Join vehicles As V on V.registration=S.vehiclerego\n"
+                    + "Inner Join customers As C on V.customerid=C.customerID\n"
+                    + "where S.VehicleRego=?\n"
+                    + "ORDER BY price");
+            updateCustomer = connection.prepareStatement("UPDATE customers SET phone = ?, address = ? WHERE customerid=?");
+
+            serviceCalculations = connection.prepareStatement("SELECT MIN(price), MAX(price), AVG(price) FROM services");
+            serviceMakeInformation = connection.prepareStatement("select make, count(make) FROM services\n"
+                    + "inner join vehicles on registration=vehiclerego\n"
+                    + "group by MAKE");
+            updateVehicle = connection.prepareStatement("UPDATE vehicles SET odometer = ? WHERE registration=?");
             selectVehicleById = connection.prepareStatement("SELECT * FROM vehicles as V INNER JOIN customers as C on v.customerid=c.customerid WHERE v.registration=?");
             selectCustomerByFields = connection.prepareStatement("SELECT * FROM customers WHERE firstname=? and lastname=? and phone=? and address=?");
-            selectCustomerVehicles = connection.prepareStatement("SELECT * FROM vehicles as V Inner Join Customers as C on V.customerid=C.customerid WHERE c.customerid=?");
+            selectCustomerVehicles = connection.prepareStatement("SELECT * FROM vehicles as V Inner Join Customers as C on V.customerid=C.customerid WHERE c.customerid=? AND V.registration=?");
+            selectCustomerVehiclesExclude = connection.prepareStatement("SELECT * FROM vehicles as V Inner Join Customers as C on V.customerid=C.customerid WHERE c.customerid=? AND V.registration!=?");
             insertNewCustomer = connection.prepareStatement("INSERT INTO Customers" + "(firstname, lastname, phone, address)" + "VALUES(?, ?, ?, ?)");
             selectAllVehicles = connection.prepareStatement("SELECT * FROM vehicles as V Inner Join Customers as C on V.customerid=C.customerid");
             selectAllServices = connection.prepareStatement("SELECT * FROM services");
+
+            //query for service table
             selectAllJoin = connection.prepareStatement("SELECT *\n"
                     + "FROM services As S \n"
                     + "Inner Join vehicles As V on V.registration=S.vehiclerego \n"
-                    + "Inner Join customers As C on V.customerid=C.customerID");
+                    + "Inner Join customers As C on V.customerid=C.customerID \n"
+                    + "ORDER BY price");
+            //selecting service from table
             selectAllJoinByCID = connection.prepareStatement("SELECT *\n"
                     + "FROM services As S \n"
                     + "Inner Join vehicles As V on V.registration=S.vehiclerego \n"
                     + "Inner Join customers As C on V.customerid=C.customerID\n"
-                    + "where c.customerid=? AND S.VehicleRego=?");
-            countMakeQuery = connection.prepareStatement("SELECT v.make,  Count(v.make)\n"
+                    + "where c.customerid=? AND S.VehicleRego=? AND S.serviceid=? \n"
+                    + "ORDER BY price");
+            selectAllJoinByCIDExclude = connection.prepareStatement("SELECT *\n"
+                    + "FROM services As S \n"
+                    + "Inner Join vehicles As V on V.registration=S.vehiclerego \n"
+                    + "Inner Join customers As C on V.customerid=C.customerID\n"
+                    + "where c.customerid=? AND S.VehicleRego=? AND S.serviceid!=? \n"
+                    + "ORDER BY price");
+            countMakeQuery = connection.prepareStatement("SELECT v.make, Count(v.make)\n"
                     + "FROM services As S \n"
                     + "Inner Join vehicles As V on V.registration=S.vehiclerego\n"
                     + "group by v.make\n"
@@ -71,11 +106,53 @@ public class VSMSModel implements IVSMSModel {
                     + "LIMIT 3;");
             insertNewVehicle = connection.prepareStatement("INSERT INTO vehicles" + "(registration, make, model, year, odometer, customerid)" + "VALUES(?, ?, ?, ?, ?, ?)");
             insertNewService = connection.prepareStatement("INSERT INTO services" + "(servicedate, price, description, vehiclerego)" + "VALUES(?, ?, ?, ?)");
-
+            deleteSelectedService = connection.prepareStatement("DELETE FROM services where serviceid=?");
         } catch (SQLException sqlException) {
             vsms.view.VSMSView.failedConnect(sqlException.toString());
             System.exit(1);
         }
+    }
+
+    public List<String> getMakeInfo() {
+        ResultSet rs = null;
+        String name = "";
+        String num = "";
+        List test = new ArrayList<String>();
+        try {
+            rs = serviceMakeInformation.executeQuery();
+            while (rs.next()) {
+                name = rs.getString("make");
+                num = String.valueOf(rs.getByte(2));
+                test.add(name + ":" + num);
+            }
+
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return test;
+    }
+
+    public List<Double> getMinMax() {
+        ResultSet rs = null;
+        double min = 0;
+        double max = 0;
+        double avg= 0;
+        List test = new ArrayList<Double>();
+        try {
+            rs = serviceCalculations.executeQuery();
+            while (rs.next()) {
+                min = rs.getDouble(1);
+                max = rs.getDouble(2);
+                avg = rs.getDouble(3);
+                test.add(min);
+                test.add(max);
+                test.add(avg);
+            }
+
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        return test;
     }
 
     public List<String> countMake() {
@@ -162,6 +239,56 @@ public class VSMSModel implements IVSMSModel {
         return outcome;
     }
 
+    public int updateCustomer(int id, String phone, String address) {
+        int result = 0;
+        try {
+
+            updateCustomer.setString(1, phone);
+            updateCustomer.setString(2, address);
+            updateCustomer.setInt(3, id);
+
+            //returns # of rows updated
+            result = updateCustomer.executeUpdate();
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return result;
+    }
+
+    public int updateVehicle(String rego, int odometer) {
+        int result = 0;
+        try {
+            updateVehicle.setInt(1, odometer);
+            updateVehicle.setString(2, rego);
+
+            //returns # of rows updated
+            result = updateVehicle.executeUpdate();
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return result;
+    }
+
+    public int removeSerive(int id) {
+
+        int result = 0;
+        try {
+            deleteSelectedService.setInt(1, id);
+
+            //returns # of rows updated
+            result = deleteSelectedService.executeUpdate();
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+            close();
+        } // end catch
+        return result;
+    }
+
     public List<Vehicle> getAllVehicles() {
         List<Vehicle> v = null;
         ResultSet rs = null;
@@ -188,30 +315,72 @@ public class VSMSModel implements IVSMSModel {
         return results;
     }
 
-    public List<Service> serviceByCIdRego(int id, String rego) {
-        ResultSet rs = null;
+    public List<Service> getServiceByRego(String rego) {
         List<Service> results = null;
+        ResultSet rs = null;
         try {
             results = new ArrayList<Service>();
+            queryServiceByRego.setString(1, rego);
+            rs = queryServiceByRego.executeQuery();
+            results = fillServices(rs);
+
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+
+        return results;
+    }
+
+    public List<Service> serviceByCIdRego(int id, String rego, int exclude) {
+        ResultSet rs = null;
+        ResultSet rs2 = null;
+        List<Service> results = null;
+        List<Service> r1 = null;
+        List<Service> r2 = null;
+        try {
+            results = new ArrayList<Service>();
+            r1 = new ArrayList<Service>();
+            r2 = new ArrayList<Service>();
             selectAllJoinByCID.setInt(1, id);
             selectAllJoinByCID.setString(2, rego);
+            selectAllJoinByCID.setInt(3, exclude);
             rs = selectAllJoinByCID.executeQuery();
-            results = fillServices(rs);
+            selectAllJoinByCIDExclude.setInt(1, id);
+            selectAllJoinByCIDExclude.setString(2, rego);
+            selectAllJoinByCIDExclude.setInt(3, exclude);
+            rs2 = selectAllJoinByCIDExclude.executeQuery();
+            r1 = fillServices(rs);
+            r2 = fillServices(rs2);
+            results.addAll(r1);
+            results.addAll(r2);
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
         return results;
     }
 
-    public List<Vehicle> getCustomerVehicles(int id) {
-        List<Vehicle> vl = null;
+    public List<Vehicle> getCustomerVehicles(int id, String rego) {
+        List<Vehicle> vResult = null;
+        List<Vehicle> v1 = null;
+        List<Vehicle> v2 = null;
         ResultSet rs = null;
+        ResultSet rs2 = null;
         try {
             selectCustomerVehicles.setInt(1, id);
+            selectCustomerVehicles.setString(2, rego);
             rs = selectCustomerVehicles.executeQuery();
-            vl = new ArrayList<Vehicle>();
+            selectCustomerVehiclesExclude.setInt(1, id);
+            selectCustomerVehiclesExclude.setString(2, rego);
+            rs2 = selectCustomerVehiclesExclude.executeQuery();
 
-            vl = fillVehicles(rs);
+            vResult = new ArrayList<Vehicle>();
+            v1 = new ArrayList<Vehicle>();
+            v2 = new ArrayList<Vehicle>();
+
+            v1 = fillVehicles(rs);
+            v2 = fillVehicles(rs2);
+            vResult.addAll(v1);
+            vResult.addAll(v2);
 
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
@@ -225,7 +394,61 @@ public class VSMSModel implements IVSMSModel {
                 close();
             } // end catch
         } // end finally 
-        return vl;
+        return vResult;
+    }
+
+    public List<Customer> getCustomerByName(String name) {
+        List<Customer> results = null;
+        ResultSet rs = null;
+
+        try {
+            // executeQuery returns ResultSet containing matching entries
+            queryCustomerByName.setString(1, "%" + name + "%");// specify name
+            rs = queryCustomerByName.executeQuery();
+            results = fillCustomer(rs);
+
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        } // end catch
+        finally {
+            try {
+                rs.close();
+            } // end try
+            catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+                close();
+            } // end catch
+        } // end finally   
+
+        return results;
+    }
+
+    public List<Customer> getCustomerByPhone(String phone) {
+        List<Customer> results = null;
+        ResultSet rs = null;
+
+        try {
+            // executeQuery returns ResultSet containing matching entries
+            queryCustomerByPhone.setString(1, phone);// specify name
+            rs = queryCustomerByPhone.executeQuery();
+            results = fillCustomer(rs);
+
+        } // end try
+        catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        } // end catch
+        finally {
+            try {
+                rs.close();
+            } // end try
+            catch (SQLException sqlException) {
+                sqlException.printStackTrace();
+                close();
+            } // end catch
+        } // end finally   
+
+        return results;
     }
 
     public Customer getCustomer(int id) {
@@ -293,7 +516,7 @@ public class VSMSModel implements IVSMSModel {
                 );
                 results.add(new Service(
                         rs.getInt("ServiceID"),
-                        rs.getDate("ServiceDate"),
+                        rs.getDate("Servicedate"),
                         rs.getString("Description"),
                         rs.getDouble("Price"),
                         v
@@ -319,7 +542,6 @@ public class VSMSModel implements IVSMSModel {
                         rs.getString("address")
                 ));
             } // end while
-
         } // end try
         catch (SQLException sqlException) {
             sqlException.printStackTrace();
